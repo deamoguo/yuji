@@ -9,7 +9,6 @@
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐟</text></svg>">
   <meta name="description" content="记录鱼缸换水、喂食、滤棉清洗，支持周期提醒和语音录入">
   <title>鱼记 - 鱼缸管理助手</title>
-    <text y='.9em' font-size='90'>🐟</text></svg>">
       <style>
 /* 鱼记 - 极简风格样式 */
 :root {
@@ -3745,9 +3744,9 @@ function renderTankDetail() {
   
   // 用药记录
   const medicineList = document.getElementById('tankMedicineList');
-  const medicineRecords = Storage.getRecords().filter(r => r.tankId === tank.id && r.type === 'medicine').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
-  if (medicineRecords.length > 0) {
-    medicineList.innerHTML = medicineRecords.map(r => `
+  const medicineRecordsAll = Storage.getRecords().filter(r => r.tankId === tank.id && r.type === 'medicine').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+  if (medicineRecordsAll.length > 0) {
+    medicineList.innerHTML = medicineRecordsAll.map(r => `
       <div class="list-item">
         <div class="list-item-icon" style="color: var(--medicine);">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

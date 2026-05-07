@@ -1,0 +1,4961 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#3d9a8b">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐟</text></svg>">
+  <meta name="description" content="记录鱼缸换水、喂食、滤棉清洗，支持周期提醒和语音录入">
+  <title>鱼记 - 鱼缸管理助手</title>
+    <text y='.9em' font-size='90'>🐟</text></svg>">
+      <style>
+/* 鱼记 - 极简风格样式 */
+:root {
+  --primary: #3d9a8b;
+  --primary-light: #5ab5a9;
+  --primary-dark: #2d7a6b;
+  --bg: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --border: #e9ecef;
+  --text: #212529;
+  --text-secondary: #6c757d;
+  --text-light: #adb5bd;
+  --danger: #dc3545;
+  --warning: #ffc107;
+  --success: #28a745;
+  /* 用药相关颜色 - 橙红色调 */
+  --medicine: #e67e22;
+  --medicine-light: #f39c12;
+  --medicine-dark: #d35400;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  touch-action: manipulation;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* 主容器 */
+.app-container {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+.page-content {
+  flex: 1;
+  min-height: 0;
+  -webkit-overflow-scrolling: touch;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-bottom: calc(70px + var(--safe-bottom));
+  background: var(--bg);
+}
+
+/* 页面标题 */
+.page-header {
+  padding: 20px 20px 16px;
+  background: var(--bg);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.page-title {
+  font-size: 28px;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: -0.5px;
+}
+
+.page-subtitle {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-top: 4px;
+}
+
+/* 底部导航 */
+.bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding-bottom: var(--safe-bottom);
+  z-index: 100;
+}
+
+.nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 0;
+  color: var(--text-light);
+  text-decoration: none;
+  font-size: 11px;
+  transition: color 0.2s;
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+.nav-item.active {
+  color: var(--primary);
+}
+
+.nav-item svg {
+  width: 24px;
+  height: 24px;
+  margin-bottom: 4px;
+}
+
+.nav-item span {
+  font-weight: 500;
+}
+
+/* 卡片 */
+.card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  margin: 0 16px 12px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.card:active {
+  transform: scale(0.98);
+}
+
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.card-badge {
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  background: var(--primary);
+  color: white;
+  font-weight: 500;
+}
+
+.card-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+
+/* 按钮 */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+  text-decoration: none;
+  min-height: 48px;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-dark);
+}
+
+.btn-primary:active {
+  transform: scale(0.97);
+}
+
+.btn-secondary {
+  background: var(--bg-secondary);
+  color: var(--text);
+  border: 1px solid var(--border);
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--primary);
+  padding: 8px 12px;
+  min-height: auto;
+}
+
+.btn-danger {
+  background: var(--danger);
+  color: white;
+}
+
+.btn-block {
+  width: 100%;
+}
+
+.btn-icon {
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border-radius: 50%;
+}
+
+.btn-sm {
+  padding: 8px 14px;
+  font-size: 13px;
+  min-height: 36px;
+}
+
+/* 输入框 */
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-label {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  background: var(--bg);
+  color: var(--text);
+  transition: border-color 0.15s;
+}
+
+.form-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.form-input::placeholder {
+  color: var(--text-light);
+}
+
+.form-hint {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
+/* 选择器 */
+.select-wrapper {
+  position: relative;
+}
+
+.form-select {
+  width: 100%;
+  padding: 14px 40px 14px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  font-size: 16px;
+  background: var(--bg);
+  color: var(--text);
+  appearance: none;
+  cursor: pointer;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.select-arrow {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  color: var(--text-secondary);
+}
+
+/* 复选框列表 */
+.checkbox-list {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.checkbox-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.checkbox-item:last-child {
+  border-bottom: none;
+}
+
+.checkbox-item:active {
+  background: var(--bg-secondary);
+}
+
+.checkbox-item input {
+  width: 20px;
+  height: 20px;
+  margin-right: 12px;
+  accent-color: var(--primary);
+}
+
+.checkbox-item-content {
+  flex: 1;
+}
+
+.checkbox-item-name {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.checkbox-item-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.checkbox-item-input {
+  width: 80px;
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 14px;
+  text-align: center;
+}
+
+/* 开关 */
+.switch-wrapper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+}
+
+.switch-wrapper:last-child {
+  border-bottom: none;
+}
+
+.switch-label {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.switch-sublabel {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.switch {
+  position: relative;
+  width: 52px;
+  height: 32px;
+  appearance: none;
+  background: #e9ecef;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.switch:checked {
+  background: var(--primary);
+}
+
+.switch::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 26px;
+  height: 26px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+}
+
+.switch:checked::after {
+  transform: translateX(20px);
+}
+
+/* 空状态 */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 30px;
+  text-align: center;
+}
+
+.empty-icon {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 20px;
+  color: var(--text-light);
+}
+
+.empty-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 8px;
+}
+
+.empty-desc {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 24px;
+}
+
+/* 时间线 */
+.timeline {
+  position: relative;
+  padding-left: 28px;
+}
+
+.timeline::before {
+  content: '';
+  position: absolute;
+  left: 8px;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  background: var(--border);
+}
+
+.timeline-item {
+  position: relative;
+  padding-bottom: 24px;
+}
+
+.timeline-item::before {
+  content: '';
+  position: absolute;
+  left: -24px;
+  top: 4px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--primary);
+  border: 2px solid var(--bg);
+}
+
+.timeline-date {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.timeline-title {
+  font-size: 15px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+
+.timeline-desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* 过滤器 */
+.filter-bar {
+  display: flex;
+  gap: 8px;
+  padding: 0 16px 16px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.filter-chip {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.filter-chip.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+}
+
+/* 模态框 */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 200;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s;
+}
+
+.modal-overlay.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.modal {
+  background: var(--bg);
+  border-radius: var(--radius) var(--radius) 0 0;
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+  transform: translateY(100%);
+  transition: transform 0.25s ease-out;
+}
+
+.modal-overlay.show .modal {
+  transform: translateY(0);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 20px;
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  background: var(--bg);
+  z-index: 1;
+}
+
+.modal-title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.modal-close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  border-radius: 50%;
+  transition: background 0.1s;
+}
+
+.modal-close:active {
+  background: var(--bg-secondary);
+}
+
+.modal-body {
+  padding: 20px;
+}
+
+.modal-footer {
+  padding: 16px 20px;
+  padding-bottom: calc(16px + var(--safe-bottom));
+  border-top: 1px solid var(--border);
+  display: flex;
+  gap: 12px;
+}
+
+.modal-footer .btn {
+  flex: 1;
+}
+
+/* 语音录入 */
+.voice-btn {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  box-shadow: 0 4px 16px rgba(61, 154, 139, 0.35);
+}
+
+.voice-btn:hover {
+  background: var(--primary-dark);
+  transform: scale(1.05);
+}
+
+.voice-btn:active {
+  transform: scale(0.95);
+}
+
+.voice-btn.recording {
+  background: var(--danger);
+  animation: pulse 1s infinite;
+}
+
+.voice-btn svg {
+  width: 32px;
+  height: 32px;
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+}
+
+.voice-feedback {
+  text-align: center;
+  padding: 20px;
+}
+
+.voice-status {
+  font-size: 16px;
+  color: var(--text-secondary);
+  margin-bottom: 8px;
+}
+
+.voice-result {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  min-height: 28px;
+}
+
+/* 列表 */
+.list-item {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.list-item:active {
+  background: var(--bg-secondary);
+}
+
+.list-item:last-child {
+  border-bottom: none;
+}
+
+.list-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12px;
+  color: var(--primary);
+}
+
+.list-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.list-item-title {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+.list-item-meta {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.list-item-arrow {
+  color: var(--text-light);
+  margin-left: 8px;
+}
+
+/* 设置项 */
+.settings-group {
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 24px;
+}
+
+.settings-item {
+  display: flex;
+  align-items: center;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  transition: background 0.1s;
+}
+
+.settings-item:active {
+  background: var(--bg-secondary);
+}
+
+.settings-item:last-child {
+  border-bottom: none;
+}
+
+.settings-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  background: var(--bg-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  color: var(--text-secondary);
+}
+
+.settings-content {
+  flex: 1;
+}
+
+.settings-title {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.settings-desc {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* 倒计时徽章 */
+.countdown-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.countdown-badge.warning {
+  background: #fff3cd;
+  color: #856404;
+}
+
+.countdown-badge.danger {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.countdown-badge.safe {
+  background: #d4edda;
+  color: #155724;
+}
+
+/* 鱼缸图标 */
+.tank-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #e8f5f3 0%, #d4edda 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 14px;
+  color: var(--primary);
+}
+
+/* 数量输入组 */
+.quantity-input {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.quantity-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 24px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.1s;
+}
+
+.quantity-btn:active {
+  background: var(--bg-secondary);
+  border-color: var(--primary);
+  color: var(--primary);
+}
+
+.quantity-value {
+  font-size: 20px;
+  font-weight: 600;
+  min-width: 80px;
+  text-align: center;
+}
+
+/* 页面特定样式 */
+.page {
+  display: none;
+}
+
+.page.active {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  flex: 1;
+}
+
+/* 鱼缸详情页 */
+.tank-detail-header {
+  padding: 20px;
+  background: linear-gradient(135deg, #f8faf9 0%, #e8f5f3 100%);
+  border-bottom: 1px solid var(--border);
+}
+
+.tank-detail-title {
+  font-size: 24px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.tank-detail-stats {
+  display: flex;
+  gap: 16px;
+}
+
+.tank-stat {
+  text-align: center;
+}
+
+.tank-stat-value {
+  font-size: 20px;
+  font-weight: 600;
+  color: var(--primary);
+}
+
+.tank-stat-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.tank-section {
+  padding: 16px 0;
+  border-bottom: 8px solid var(--bg-secondary);
+}
+
+.tank-section:last-child {
+  border-bottom: none;
+}
+
+.tank-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px 12px;
+}
+
+.tank-section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+/* 快速操作 */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  padding: 16px 20px;
+}
+
+.quick-action {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 16px 8px;
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+}
+
+.quick-action:active {
+  transform: scale(0.95);
+  background: var(--border);
+}
+
+.quick-action-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+  color: var(--primary);
+}
+
+.quick-action-icon.medicine {
+  color: var(--medicine);
+}
+
+.quick-action-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text);
+}
+
+/* Toast提示 */
+.toast {
+  position: fixed;
+  bottom: 90px;
+  left: 50%;
+  transform: translateX(-50%) translateY(100px);
+  background: var(--text);
+  color: white;
+  padding: 14px 24px;
+  border-radius: var(--radius);
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 300;
+  opacity: 0;
+  transition: all 0.3s;
+  max-width: calc(100% - 40px);
+  text-align: center;
+}
+
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+
+.toast.success {
+  background: var(--success);
+}
+
+.toast.error {
+  background: var(--danger);
+}
+
+/* 删除确认 */
+.delete-btn {
+  color: var(--danger);
+  background: none;
+  border: none;
+  padding: 8px;
+  cursor: pointer;
+}
+
+/* 分隔线 */
+.divider {
+  height: 1px;
+  background: var(--border);
+  margin: 16px 0;
+}
+
+/* 返回按钮 */
+.back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--primary);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 8px;
+  background: none;
+  border: none;
+}
+
+/* 数字输入 */
+input[type="number"] {
+  -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* 百分比滑块 */
+.percent-slider {
+  width: 100%;
+  height: 8px;
+  border-radius: 4px;
+  appearance: none;
+  background: var(--border);
+  outline: none;
+  margin: 12px 0;
+}
+
+.percent-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--primary);
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(61, 154, 139, 0.3);
+}
+
+.percent-value {
+  text-align: center;
+  font-size: 32px;
+  font-weight: 700;
+  color: var(--primary);
+}
+
+/* 提醒规则卡片 */
+.reminder-card {
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin: 0 16px 12px;
+  overflow: hidden;
+}
+
+.reminder-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--bg-secondary);
+}
+
+.reminder-tank {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.reminder-type {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.reminder-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+}
+
+.reminder-info {
+  flex: 1;
+}
+
+.reminder-cycle {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.reminder-next {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+/* 关于页 */
+.about-header {
+  text-align: center;
+  padding: 40px 20px;
+}
+
+.about-logo {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto 16px;
+  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-light) 100%);
+  border-radius: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+}
+
+.about-name {
+  font-size: 22px;
+  font-weight: 700;
+  margin-bottom: 4px;
+}
+
+.about-version {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+/* 动画 */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* 隐藏 */
+.hidden {
+  display: none !important;
+}
+
+/* 批量操作模式 */
+.batch-mode .card {
+  cursor: default;
+}
+
+.batch-mode .card:active {
+  transform: none;
+}
+
+.batch-card {
+  display: flex;
+  align-items: center;
+  padding: 16px;
+  margin: 0 16px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: all 0.15s;
+}
+
+.batch-card.selected {
+  border-color: var(--primary);
+  background: #f0faf8;
+}
+
+.batch-checkbox {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  margin-right: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+  flex-shrink: 0;
+}
+
+.batch-card.selected .batch-checkbox {
+  background: var(--primary);
+  border-color: var(--primary);
+}
+
+.batch-checkbox svg {
+  width: 14px;
+  height: 14px;
+  color: white;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.batch-card.selected .batch-checkbox svg {
+  opacity: 1;
+}
+
+.batch-card-content {
+  flex: 1;
+  display: flex;
+  align-items: center;
+}
+
+.batch-card-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.batch-card-title {
+  font-size: 17px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.batch-card-meta {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.batch-actions-header {
+  padding: 0 16px 12px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.batch-select-all {
+  font-size: 14px;
+  color: var(--primary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px 12px;
+  border-radius: 8px;
+}
+
+.batch-select-all:active {
+  background: var(--bg-secondary);
+}
+
+.batch-select-range {
+  font-size: 14px;
+  color: var(--text-secondary);
+}
+
+/* 批量操作底部栏 */
+.batch-action-bar {
+  position: fixed;
+  bottom: 70px;
+  left: 0;
+  right: 0;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
+  padding: 12px 16px;
+  padding-bottom: calc(12px + var(--safe-bottom));
+  z-index: 100;
+  display: none;
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
+}
+
+.batch-action-bar.show {
+  display: block;
+}
+
+.batch-action-info {
+  text-align: center;
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+}
+
+.batch-action-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.batch-btn {
+  flex: 1;
+  padding: 10px 8px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--primary);
+  background: var(--bg);
+  color: var(--primary);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.batch-btn:active {
+  background: var(--primary);
+  color: white;
+}
+
+.batch-btn.medicine {
+  border-color: var(--medicine);
+  color: var(--medicine);
+}
+
+.batch-btn.medicine:active {
+  background: var(--medicine);
+  color: white;
+}
+
+.batch-btn-cancel {
+  border-color: var(--border);
+  color: var(--text-secondary);
+}
+
+.batch-btn-cancel:active {
+  background: var(--bg-secondary);
+  color: var(--text);
+}
+
+/* 批量换水设置相关样式 */
+.batch-tanks-preview {
+  background: var(--bg-secondary);
+  border-radius: var(--radius-sm);
+  padding: 12px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  max-height: 100px;
+  overflow-y: auto;
+}
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- 鱼缸页面 -->
+    <div id="page-tanks" class="page active">
+      <div class="page-header">
+        <h1 class="page-title">鱼缸</h1>
+        <p class="page-subtitle">点击鱼缸查看详情或记录</p>
+      </div>
+      <div id="tanksList" class="page-content">
+        <!-- 静态空状态：即使JS失败也能看到添加按钮 -->
+        <div class="empty-state" id="defaultEmptyState">
+          <div class="empty-icon">🐟</div>
+          <div class="empty-title">还没有鱼缸</div>
+          <div class="empty-desc">点击下方按钮添加你的第一个鱼缸</div>
+          <button class="btn btn-primary" onclick="showAddTankModal()">添加鱼缸</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 批量操作底部栏 -->
+    <div id="batchActionBar" class="batch-action-bar">
+      <div class="batch-action-info">
+        <span id="batchSelectedCount">已选 0 个</span>
+      </div>
+      <div class="batch-action-buttons">
+        <button class="batch-btn" onclick="batchWaterChange()">换水</button>
+        <button class="batch-btn" onclick="batchFeeding()">喂食</button>
+        <button class="batch-btn" onclick="batchFilterClean()">滤棉</button>
+        <button class="batch-btn medicine" onclick="batchMedicine()">用药</button>
+        <button class="batch-btn batch-btn-cancel" onclick="exitBatchMode()">取消</button>
+      </div>
+    </div>
+
+    <!-- 记录页面 -->
+    <div id="page-records" class="page">
+      <div class="page-header">
+        <h1 class="page-title">记录</h1>
+        <p class="page-subtitle">所有操作记录的时间线</p>
+      </div>
+      <div id="recordFilterBar" class="filter-bar"></div>
+      <div id="recordTypeFilterBar" class="filter-bar"></div>
+      <div id="recordsList" class="page-content"></div>
+      
+      <!-- 语音录入按钮 -->
+      <button class="voice-btn" onclick="showVoiceModal()" style="position: fixed; bottom: 90px; right: 20px; z-index: 50;">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+          <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+          <line x1="12" y1="19" x2="12" y2="23"/>
+          <line x1="8" y1="23" x2="16" y2="23"/>
+        </svg>
+      </button>
+    </div>
+
+    <!-- 提醒页面 -->
+    <div id="page-reminders" class="page">
+      <div class="page-header">
+        <h1 class="page-title">提醒</h1>
+        <p class="page-subtitle">管理各缸的换水和滤棉提醒</p>
+      </div>
+      <div id="remindersList" class="page-content"></div>
+    </div>
+
+    <!-- 设置页面 -->
+    <div id="page-settings" class="page">
+      <div class="page-header">
+        <h1 class="page-title">设置</h1>
+      </div>
+      <div class="page-content">
+        <div class="settings-group">
+          <div class="settings-item" onclick="showManageTanks()">
+            <div class="settings-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="2" y="7" width="20" height="14" rx="2"/>
+                <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+              </svg>
+            </div>
+            <div class="settings-content">
+              <div class="settings-title">管理鱼缸</div>
+              <div class="settings-desc">添加、编辑或删除鱼缸</div>
+            </div>
+            <svg class="list-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </div>
+          <div class="settings-item" onclick="showManageFish()">
+            <div class="settings-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+                <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+              </svg>
+            </div>
+            <div class="settings-content">
+              <div class="settings-title">管理鱼</div>
+              <div class="settings-desc">添加、编辑或删除鱼</div>
+            </div>
+            <svg class="list-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M9 18l6-6-6-6"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-item">
+            <div class="settings-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </div>
+            <div class="settings-content">
+              <div class="settings-title">允许通知</div>
+              <div class="settings-desc">接收换水和滤棉提醒</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="notifyToggle">
+            </label>
+          </div>
+          <div class="settings-item">
+            <div class="settings-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              </svg>
+            </div>
+            <div class="settings-content">
+              <div class="settings-title">语音反馈</div>
+              <div class="settings-desc">语音录入时播放提示音</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="voiceFeedbackToggle" checked>
+            </label>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <div class="settings-item" onclick="exportData()">
+            <div class="settings-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="7,10 12,15 17,10"/>
+                <line x1="12" y1="15" x2="12" y2="3"/>
+              </svg>
+            </div>
+            <div class="settings-content">
+              <div class="settings-title">导出数据</div>
+              <div class="settings-desc">备份所有数据为 JSON 文件</div>
+            </div>
+          </div>
+          <div class="settings-item" onclick="importData()">
+            <div class="settings-icon">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+                <polyline points="17,8 12,3 7,8"/>
+                <line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+            </div>
+            <div class="settings-content">
+              <div class="settings-title">导入数据</div>
+              <div class="settings-desc">从备份文件恢复数据</div>
+            </div>
+          </div>
+          <div class="settings-item" onclick="clearAllData()" style="color: var(--danger);">
+            <div class="settings-icon" style="color: var(--danger);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+              </svg>
+            </div>
+            <div class="settings-content">
+              <div class="settings-title">清空所有数据</div>
+              <div class="settings-desc">不可恢复，请谨慎操作</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="about-header">
+          <div class="about-logo">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 1 2-2h2"/>
+              <path d="M2 12c0-3 2-6 4-8"/>
+              <path d="M22 12c0-3-2-6-4-8"/>
+            </svg>
+          </div>
+          <div class="about-name">鱼记</div>
+          <div class="about-version">版本 1.0.0</div>
+          <div class="empty-desc" style="margin-top: 12px;">让养鱼变得更简单</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 底部导航 -->
+    <nav class="bottom-nav">
+      <div class="nav-item active" data-page="tanks">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="7" width="20" height="14" rx="2"/>
+          <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
+        </svg>
+        <span>鱼缸</span>
+      </div>
+      <div class="nav-item" data-page="records">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <span>记录</span>
+      </div>
+      <div class="nav-item" data-page="reminders">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+          <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <span>提醒</span>
+      </div>
+      <div class="nav-item" data-page="settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="3"/>
+          <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+        </svg>
+        <span>设置</span>
+      </div>
+    </nav>
+  </div>
+
+  <!-- 鱼缸详情页 -->
+  <div id="tankDetailPage" class="page" style="position: fixed; inset: 0; z-index: 150; background: var(--bg); overflow-y: auto;">
+    <div class="tank-detail-header">
+      <button class="back-btn" onclick="hideTankDetail()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M19 12H5M12 19l-7-7 7-7"/>
+        </svg>
+        返回
+      </button>
+      <h1 class="tank-detail-title" id="tankDetailTitle">鱼缸名称</h1>
+      <p class="card-meta" id="tankDetailLocation">位置</p>
+      <div class="tank-detail-stats" style="margin-top: 16px;">
+        <div class="tank-stat">
+          <div class="tank-stat-value" id="tankFishCount">0</div>
+          <div class="tank-stat-label">条鱼</div>
+        </div>
+        <div class="tank-stat">
+          <div class="tank-stat-value" id="tankWaterCount">0</div>
+          <div class="tank-stat-label">换水</div>
+        </div>
+        <div class="tank-stat">
+          <div class="tank-stat-value" id="tankFilterCount">0</div>
+          <div class="tank-stat-label">洗滤棉</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 快速操作 -->
+    <div class="quick-actions">
+      <button class="quick-action" onclick="showWaterChangeModal()">
+        <div class="quick-action-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+          </svg>
+        </div>
+        <span class="quick-action-label">换水</span>
+      </button>
+      <button class="quick-action" onclick="showFeedingModal()">
+        <div class="quick-action-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+          </svg>
+        </div>
+        <span class="quick-action-label">喂食</span>
+      </button>
+      <button class="quick-action" onclick="showFilterCleanModal()">
+        <div class="quick-action-icon">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <span class="quick-action-label">洗滤棉</span>
+      </button>
+      <button class="quick-action" onclick="showMedicineModal()">
+        <div class="quick-action-icon medicine">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.5 20.5L3.5 13.5a4.95 4.95 0 0 1 7-7l7 7a4.95 4.95 0 0 1-7 7z"/>
+            <path d="M8.5 8.5l7 7"/>
+          </svg>
+        </div>
+        <span class="quick-action-label">用药</span>
+      </button>
+    </div>
+
+    <!-- 鱼列表 -->
+    <div class="tank-section">
+      <div class="tank-section-header">
+        <span class="tank-section-title">缸内鱼</span>
+        <button class="btn btn-ghost btn-sm" onclick="showAddFishModal()">添加鱼</button>
+      </div>
+      <div id="tankFishList"></div>
+    </div>
+
+    <!-- 换水记录 -->
+    <div class="tank-section">
+      <div class="tank-section-header">
+        <span class="tank-section-title">换水记录</span>
+      </div>
+      <div id="tankWaterList"></div>
+    </div>
+
+    <!-- 滤棉清洗记录 -->
+    <div class="tank-section">
+      <div class="tank-section-header">
+        <span class="tank-section-title">滤棉清洗记录</span>
+      </div>
+      <div id="tankFilterList"></div>
+    </div>
+
+    <!-- 用药记录 -->
+    <div class="tank-section">
+      <div class="tank-section-header">
+        <span class="tank-section-title">用药记录</span>
+      </div>
+      <div id="tankMedicineList"></div>
+    </div>
+
+    <div style="height: 30px;"></div>
+  </div>
+
+  <!-- 添加鱼缸模态框 -->
+  <div id="addTankModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">添加鱼缸</h3>
+        <button class="modal-close" onclick="closeModal('addTankModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">鱼缸名称 *</label>
+          <input type="text" class="form-input" id="newTankName" placeholder="例如：客厅大缸">
+        </div>
+        <div class="form-group">
+          <label class="form-label">位置（可选）</label>
+          <input type="text" class="form-input" id="newTankLocation" placeholder="例如：客厅电视柜旁">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addTankModal')">取消</button>
+        <button class="btn btn-primary" onclick="addTank()">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑鱼缸模态框 -->
+  <div id="editTankModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">编辑鱼缸</h3>
+        <button class="modal-close" onclick="closeModal('editTankModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editTankId">
+        <div class="form-group">
+          <label class="form-label">鱼缸名称 *</label>
+          <input type="text" class="form-input" id="editTankName">
+        </div>
+        <div class="form-group">
+          <label class="form-label">位置</label>
+          <input type="text" class="form-input" id="editTankLocation">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('editTankModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveTank()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 管理鱼缸模态框 -->
+  <div id="manageTanksModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">管理鱼缸</h3>
+        <button class="modal-close" onclick="closeModal('manageTanksModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 0;">
+        <div id="manageTanksList"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('manageTanksModal')">关闭</button>
+        <button class="btn btn-primary" onclick="closeModal('manageTanksModal'); showAddTankModal();">添加鱼缸</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加鱼模态框 -->
+  <div id="addFishModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">添加鱼</h3>
+        <button class="modal-close" onclick="closeModal('addFishModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">所属鱼缸 *</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="newFishTank"></select>
+            <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">鱼名称 *</label>
+          <input type="text" class="form-input" id="newFishName" placeholder="例如：小金">
+        </div>
+        <div class="form-group">
+          <label class="form-label">品种（可选）</label>
+          <input type="text" class="form-input" id="newFishSpecies" placeholder="例如：兰寿金鱼">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('addFishModal')">取消</button>
+        <button class="btn btn-primary" onclick="addFish()">添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑鱼模态框 -->
+  <div id="editFishModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">编辑鱼</h3>
+        <button class="modal-close" onclick="closeModal('editFishModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editFishId">
+        <div class="form-group">
+          <label class="form-label">所属鱼缸 *</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="editFishTank"></select>
+            <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">鱼名称 *</label>
+          <input type="text" class="form-input" id="editFishName">
+        </div>
+        <div class="form-group">
+          <label class="form-label">品种</label>
+          <input type="text" class="form-input" id="editFishSpecies">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('editFishModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveFish()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 管理鱼模态框 -->
+  <div id="manageFishModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">管理鱼</h3>
+        <button class="modal-close" onclick="closeModal('manageFishModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body" style="padding: 0;">
+        <div id="manageFishList"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('manageFishModal')">关闭</button>
+        <button class="btn btn-primary" onclick="closeModal('manageFishModal'); showAddFishModal();">添加鱼</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 鱼详情模态框 -->
+  <div id="fishDetailModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title" id="fishDetailName">鱼名称</h3>
+        <button class="modal-close" onclick="closeModal('fishDetailModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div style="display: flex; gap: 12px; margin-bottom: 16px;">
+          <div class="card-badge" id="fishDetailTank">所属缸</div>
+          <div class="card-badge" style="background: var(--bg-secondary); color: var(--text);" id="fishDetailSpecies">品种</div>
+        </div>
+        <div class="tank-section-title" style="margin-bottom: 8px;">喂食记录</div>
+        <div id="fishDetailRecords"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-block" onclick="closeModal('fishDetailModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 换水模态框 -->
+  <div id="waterChangeModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">记录换水</h3>
+        <button class="modal-close" onclick="closeModal('waterChangeModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">鱼缸</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="waterTank"></select>
+            <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">换水量</label>
+          <div class="percent-value" id="waterAmountDisplay">33%</div>
+          <input type="range" class="percent-slider" id="waterAmount" min="10" max="100" step="5" value="33" oninput="updateWaterAmountDisplay(this.value)">
+          <div class="form-hint" style="text-align: center;" id="waterAmountText">三分之一</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">换水时间</label>
+          <input type="datetime-local" class="form-input" id="waterTime">
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注（可选）</label>
+          <input type="text" class="form-input" id="waterNotes" placeholder="添加备注...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('waterChangeModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveWaterChange()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 喂食模态框 -->
+  <div id="feedingModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">记录喂食</h3>
+        <button class="modal-close" onclick="closeModal('feedingModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">鱼缸</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="feedingTank"></select>
+            <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">喂食模式</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="feedingMode" onchange="updateFeedingMode()">
+              <option value="batch">批次模式（填总量）</option>
+              <option value="detail">逐条模式（按鱼填）</option>
+            </select>
+            <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div id="batchSection" class="form-group">
+          <label class="form-label">总喂食量（克）</label>
+          <input type="number" class="form-input" id="batchAmount" value="1" min="0" max="100">
+        </div>
+        <div id="detailSection" class="form-group" style="display: none;">
+          <label class="form-label">选择鱼并填写食量</label>
+          <div id="feedingFishSelect" class="checkbox-list"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">喂食时间</label>
+          <input type="datetime-local" class="form-input" id="feedingTime">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('feedingModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveFeeding()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 滤棉清洗模态框 -->
+  <div id="filterCleanModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">记录滤棉清洗</h3>
+        <button class="modal-close" onclick="closeModal('filterCleanModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">鱼缸</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="filterTank"></select>
+            <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">清洗时间</label>
+          <input type="datetime-local" class="form-input" id="filterTime">
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注（可选）</label>
+          <input type="text" class="form-input" id="filterNotes" placeholder="添加备注...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('filterCleanModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveFilterClean()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 编辑提醒模态框 -->
+  <div id="editReminderModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">修改提醒周期</h3>
+        <button class="modal-close" onclick="closeModal('editReminderModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <input type="hidden" id="editReminderId">
+        <div class="form-group">
+          <label class="form-label">周期（天）</label>
+          <input type="number" class="form-input" id="editReminderCycle" min="1" max="365">
+          <div class="form-hint">输入数字，如 7 表示每7天提醒一次</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('editReminderModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveReminderCycle()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 语音录入模态框 -->
+  <div id="voiceModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">语音录入</h3>
+        <button class="modal-close" onclick="closeModal('voiceModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="voice-feedback">
+          <button id="voiceBtn" class="voice-btn" onclick="toggleVoiceInput()" style="margin: 0 auto 20px;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+          </button>
+          <div id="voiceStatus" class="voice-status">点击麦克风开始说话</div>
+          <div id="voiceResult" class="voice-result"></div>
+        </div>
+        <div class="form-hint" style="text-align: center; margin-top: 20px;">
+          试试说："给客厅缸换了三分之一的水"<br>
+          或："卧室缸喂食3克"<br>
+          或："清洗主缸滤棉"<br>
+          或："给1号缸下了甲基蓝，用了2毫升"<br>
+          <br>
+          <strong>批量操作：</strong><br>
+          "1到10号缸全部换水"<br>
+          "3到5号缸喂食"<br>
+          "所有缸换水"
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary btn-block" onclick="closeModal('voiceModal')">关闭</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 批量换水模态框 -->
+  <div id="batchWaterModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">批量换水</h3>
+        <button class="modal-close" onclick="closeModal('batchWaterModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">选中的鱼缸</label>
+          <div id="batchWaterTanks" class="batch-tanks-preview"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">统一换水量</label>
+          <div class="percent-value" id="batchWaterAmountDisplay">33%</div>
+          <input type="range" class="percent-slider" id="batchWaterAmount" min="10" max="100" step="5" value="33" oninput="updateBatchWaterAmountDisplay(this.value)">
+          <div class="form-hint" style="text-align: center;" id="batchWaterAmountText">三分之一</div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('batchWaterModal')">取消</button>
+        <button class="btn btn-primary" onclick="confirmBatchWater()">确认记录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 用药模态框 -->
+  <div id="medicineModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">记录用药</h3>
+        <button class="modal-close" onclick="closeModal('medicineModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">鱼缸 *</label>
+          <div class="select-wrapper">
+            <select class="form-select" id="medicineTank"></select>
+            <svg class="select-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M6 9l6 6 6-6"/>
+            </svg>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">药物名称 *</label>
+          <input type="text" class="form-input" id="medicineName" placeholder="例如：甲基蓝、土霉素、黄粉">
+        </div>
+        <div class="form-group">
+          <label class="form-label">用量 *</label>
+          <input type="text" class="form-input" id="medicineDosage" placeholder="例如：2毫升、3颗、一包">
+        </div>
+        <div class="form-group">
+          <label class="form-label">开始日期</label>
+          <input type="datetime-local" class="form-input" id="medicineStartDate">
+        </div>
+        <div class="form-group">
+          <label class="form-label">疗程（天）</label>
+          <input type="number" class="form-input" id="medicineDuration" placeholder="例如：3" min="1" max="30">
+          <div class="form-hint">设置疗程后，将提醒您何时停药</div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">备注</label>
+          <input type="text" class="form-input" id="medicineNotes" placeholder="症状描述、效果等...">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('medicineModal')">取消</button>
+        <button class="btn btn-primary" onclick="saveMedicine()" style="background: var(--medicine);">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 批量用药模态框 -->
+  <div id="batchMedicineModal" class="modal-overlay">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 class="modal-title">批量用药</h3>
+        <button class="modal-close" onclick="closeModal('batchMedicineModal')">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18 6L6 18M6 6l12 12"/>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label">选中的鱼缸</label>
+          <div id="batchMedicineTanks" class="batch-tanks-preview"></div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">药物名称 *</label>
+          <input type="text" class="form-input" id="batchMedicineName" placeholder="例如：甲基蓝、土霉素、黄粉">
+        </div>
+        <div class="form-group">
+          <label class="form-label">用量 *</label>
+          <input type="text" class="form-input" id="batchMedicineDosage" placeholder="例如：2毫升、3颗、一包">
+        </div>
+        <div class="form-group">
+          <label class="form-label">疗程（天）</label>
+          <input type="number" class="form-input" id="batchMedicineDuration" placeholder="例如：3" min="1" max="30">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('batchMedicineModal')">取消</button>
+        <button class="btn btn-primary" onclick="confirmBatchMedicine()" style="background: var(--medicine);">确认记录</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast">提示</div>
+
+        
+  <script>
+/**
+ * safeStorage - localStorage兼容层
+ * 在localStorage不可用时使用内存存储作为fallback
+ */
+const safeStorage = (() => {
+  let memoryStore = {};
+  let useLocalStorage = true;
+  let storageUnavailable = false;
+  
+  // 先检测localStorage是否可用（使用IIFE避免递归）
+  (function() {
+    try {
+      window.localStorage.setItem('__test__', '1');
+      window.localStorage.removeItem('__test__');
+    } catch (e) {
+      useLocalStorage = false;
+      storageUnavailable = true;
+      console.warn('localStorage不可用，已切换到内存存储模式');
+    }
+  })();
+  
+  return {
+    isUnavailable() {
+      return storageUnavailable;
+    },
+    getItem(key) {
+      if (useLocalStorage) {
+        try { 
+          return window.localStorage.getItem(key); 
+        } catch(e) { 
+          return memoryStore[key] || null; 
+        }
+      }
+      return memoryStore[key] || null;
+    },
+    setItem(key, value) {
+      if (useLocalStorage) {
+        try { 
+          window.localStorage.setItem(key, value); 
+          return; 
+        } catch(e) { 
+          // 如果设置失败（比如配额满了），降级到内存存储
+          console.warn('localStorage写入失败，降级到内存存储');
+          useLocalStorage = false;
+          storageUnavailable = true;
+        }
+      }
+      memoryStore[key] = String(value);
+    },
+    removeItem(key) {
+      if (useLocalStorage) {
+        try { 
+          window.localStorage.removeItem(key); 
+          return; 
+        } catch(e) { 
+          // 忽略错误
+        }
+      }
+      delete memoryStore[key];
+    }
+  };
+})();
+
+/**
+ * 存储不可用提示管理
+ */
+const StorageWarning = {
+  init() {
+    if (safeStorage.isUnavailable()) {
+      this.showWarning();
+    }
+  },
+  showWarning() {
+    // 检查是否已有提示
+    if (document.getElementById('storageWarning')) return;
+    
+    const warning = document.createElement('div');
+    warning.id = 'storageWarning';
+    warning.style.cssText = `
+      background: linear-gradient(135deg, #fff3cd 0%, #ffeeba 100%);
+      color: #856404;
+      padding: 12px 16px;
+      font-size: 13px;
+      line-height: 1.5;
+      text-align: center;
+      border-bottom: 1px solid #ffc107;
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 9999;
+    `;
+    warning.innerHTML = `
+      ⚠️ <strong>存储模式受限</strong>：数据仅保存在内存中，关闭页面后将丢失。
+      建议通过正规网址访问以获得完整体验。
+    `;
+    document.body.insertBefore(warning, document.body.firstChild);
+    
+    // 调整app-container的top padding
+    const appContainer = document.querySelector('.app-container');
+    if (appContainer) {
+      appContainer.style.paddingTop = '48px';
+    }
+  }
+};
+
+/**
+ * 全局错误捕获
+ */
+window.onerror = function(message, source, lineno, colno, error) {
+  console.error('全局错误:', message, source, lineno, colno, error);
+  // 显示友好提示，但不让页面崩溃
+  if (typeof showToast === 'function') {
+    showToast('部分功能可能异常，请刷新页面重试', 'error');
+  }
+  return true; // 阻止默认错误处理
+};
+
+window.onunhandledrejection = function(event) {
+  console.error('未处理的Promise拒绝:', event.reason);
+  // 阻止未处理的Promise错误导致页面崩溃
+  event.preventDefault();
+};
+
+/**
+ * 鱼记 - 数据存储层
+ * 基于 LocalStorage 的结构化数据存储
+ */
+
+const Storage = {
+  // 存储键名
+  KEYS: {
+    TANKS: 'yuji_tanks',
+    FISH: 'yuji_fish',
+    RECORDS: 'yuji_records',
+    REMINDERS: 'yuji_reminders',
+    SETTINGS: 'yuji_settings'
+  },
+
+  // 初始化存储
+  init() {
+    if (!safeStorage.getItem(this.KEYS.TANKS)) {
+      safeStorage.setItem(this.KEYS.TANKS, JSON.stringify([]));
+    }
+    if (!safeStorage.getItem(this.KEYS.FISH)) {
+      safeStorage.setItem(this.KEYS.FISH, JSON.stringify([]));
+    }
+    if (!safeStorage.getItem(this.KEYS.RECORDS)) {
+      safeStorage.setItem(this.KEYS.RECORDS, JSON.stringify([]));
+    }
+    if (!safeStorage.getItem(this.KEYS.REMINDERS)) {
+      safeStorage.setItem(this.KEYS.REMINDERS, JSON.stringify([]));
+    }
+    if (!safeStorage.getItem(this.KEYS.SETTINGS)) {
+      safeStorage.setItem(this.KEYS.SETTINGS, JSON.stringify({
+        notificationsEnabled: false,
+        voiceFeedback: true
+      }));
+    }
+  },
+
+  // ============ 鱼缸操作 ============
+
+  // 获取所有鱼缸
+  getTanks() {
+    return JSON.parse(safeStorage.getItem(this.KEYS.TANKS) || '[]');
+  },
+
+  // 获取单个鱼缸
+  getTank(id) {
+    const tanks = this.getTanks();
+    return tanks.find(t => t.id === id);
+  },
+
+  // 添加鱼缸
+  addTank(tank) {
+    const tanks = this.getTanks();
+    const newTank = {
+      id: Date.now().toString(),
+      name: tank.name || '新鱼缸',
+      location: tank.location || '',
+      createdAt: new Date().toISOString()
+    };
+    tanks.push(newTank);
+    safeStorage.setItem(this.KEYS.TANKS, JSON.stringify(tanks));
+    
+    // 自动创建默认提醒规则
+    this.addReminder({
+      tankId: newTank.id,
+      type: 'water_change',
+      cycleDays: 7,
+      enabled: true
+    });
+    this.addReminder({
+      tankId: newTank.id,
+      type: 'filter_clean',
+      cycleDays: 30,
+      enabled: true
+    });
+    
+    return newTank;
+  },
+
+  // 更新鱼缸
+  updateTank(id, updates) {
+    const tanks = this.getTanks();
+    const index = tanks.findIndex(t => t.id === id);
+    if (index !== -1) {
+      tanks[index] = { ...tanks[index], ...updates };
+      safeStorage.setItem(this.KEYS.TANKS, JSON.stringify(tanks));
+      return tanks[index];
+    }
+    return null;
+  },
+
+  // 删除鱼缸（同时删除关联的鱼和提醒）
+  deleteTank(id) {
+    const tanks = this.getTanks();
+    const filtered = tanks.filter(t => t.id !== id);
+    safeStorage.setItem(this.KEYS.TANKS, JSON.stringify(filtered));
+    
+    // 删除关联的鱼
+    const fish = this.getFish().filter(f => f.tankId !== id);
+    safeStorage.setItem(this.KEYS.FISH, JSON.stringify(fish));
+    
+    // 删除关联的提醒
+    const reminders = this.getReminders().filter(r => r.tankId !== id);
+    safeStorage.setItem(this.KEYS.REMINDERS, JSON.stringify(reminders));
+  },
+
+  // ============ 鱼操作 ============
+
+  // 获取所有鱼
+  getFish() {
+    return JSON.parse(safeStorage.getItem(this.KEYS.FISH) || '[]');
+  },
+
+  // 获取某缸的鱼
+  getFishByTank(tankId) {
+    return this.getFish().filter(f => f.tankId === tankId);
+  },
+
+  // 获取单条鱼
+  getFishById(id) {
+    return this.getFish().find(f => f.id === id);
+  },
+
+  // 添加鱼
+  addFish(fish) {
+    const allFish = this.getFish();
+    const newFish = {
+      id: Date.now().toString(),
+      tankId: fish.tankId,
+      name: fish.name || '新鱼',
+      species: fish.species || '',
+      createdAt: new Date().toISOString()
+    };
+    allFish.push(newFish);
+    safeStorage.setItem(this.KEYS.FISH, JSON.stringify(allFish));
+    return newFish;
+  },
+
+  // 更新鱼
+  updateFish(id, updates) {
+    const fish = this.getFish();
+    const index = fish.findIndex(f => f.id === id);
+    if (index !== -1) {
+      fish[index] = { ...fish[index], ...updates };
+      safeStorage.setItem(this.KEYS.FISH, JSON.stringify(fish));
+      return fish[index];
+    }
+    return null;
+  },
+
+  // 删除鱼
+  deleteFish(id) {
+    const fish = this.getFish().filter(f => f.id !== id);
+    safeStorage.setItem(this.KEYS.FISH, JSON.stringify(fish));
+  },
+
+  // ============ 记录操作 ============
+
+  // 获取所有记录
+  getRecords() {
+    return JSON.parse(safeStorage.getItem(this.KEYS.RECORDS) || '[]');
+  },
+
+  // 获取某缸的记录
+  getRecordsByTank(tankId) {
+    return this.getRecords().filter(r => r.tankId === tankId);
+  },
+
+  // 获取某条鱼的记录
+  getRecordsByFish(fishId) {
+    return this.getRecords().filter(r => r.fishId === fishId);
+  },
+
+  // 按类型获取记录
+  getRecordsByType(type) {
+    return this.getRecords().filter(r => r.type === type);
+  },
+
+  // 按日期范围获取记录
+  getRecordsByDateRange(startDate, endDate) {
+    return this.getRecords().filter(r => {
+      const recordDate = new Date(r.createdAt);
+      return recordDate >= new Date(startDate) && recordDate <= new Date(endDate);
+    });
+  },
+
+  // 综合筛选记录
+  filterRecords({ tankId, type, startDate, endDate }) {
+    let records = this.getRecords();
+    
+    if (tankId) {
+      records = records.filter(r => r.tankId === tankId);
+    }
+    if (type && type !== 'all') {
+      records = records.filter(r => r.type === type);
+    }
+    if (startDate) {
+      records = records.filter(r => new Date(r.createdAt) >= new Date(startDate));
+    }
+    if (endDate) {
+      records = records.filter(r => new Date(r.createdAt) <= new Date(endDate));
+    }
+    
+    return records.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+  },
+
+  // 添加换水记录
+  addWaterChangeRecord(data) {
+    const records = this.getRecords();
+    const newRecord = {
+      id: Date.now().toString(),
+      tankId: data.tankId,
+      type: 'water_change',
+      amount: data.amount, // 百分比，如 33 表示三分之一
+      notes: data.notes || '',
+      createdAt: data.createdAt || new Date().toISOString()
+    };
+    records.push(newRecord);
+    safeStorage.setItem(this.KEYS.RECORDS, JSON.stringify(records));
+    return newRecord;
+  },
+
+  // 添加喂食记录（批次模式）
+  addFeedingBatchRecord(data) {
+    const records = this.getRecords();
+    const newRecord = {
+      id: Date.now().toString(),
+      tankId: data.tankId,
+      type: 'feeding',
+      mode: 'batch',
+      totalAmount: data.totalAmount,
+      notes: data.notes || '',
+      createdAt: data.createdAt || new Date().toISOString()
+    };
+    records.push(newRecord);
+    return newRecord;
+  },
+
+  // 添加喂食记录（逐条模式）
+  addFeedingDetailRecord(data) {
+    const records = this.getRecords();
+    
+    // 为每条鱼创建单独记录
+    data.feedings.forEach(feeding => {
+      const newRecord = {
+        id: (Date.now() + Math.random()).toString(),
+        tankId: data.tankId,
+        fishId: feeding.fishId,
+        type: 'feeding',
+        mode: 'detail',
+        amount: feeding.amount,
+        createdAt: data.createdAt || new Date().toISOString()
+      };
+      records.push(newRecord);
+    });
+    
+    safeStorage.setItem(this.KEYS.RECORDS, JSON.stringify(records));
+    return records;
+  },
+
+  // 添加滤棉清洗记录
+  addFilterCleanRecord(data) {
+    const records = this.getRecords();
+    const newRecord = {
+      id: Date.now().toString(),
+      tankId: data.tankId,
+      type: 'filter_clean',
+      notes: data.notes || '',
+      createdAt: data.createdAt || new Date().toISOString()
+    };
+    records.push(newRecord);
+    safeStorage.setItem(this.KEYS.RECORDS, JSON.stringify(records));
+    return newRecord;
+  },
+
+  // 添加用药记录
+  addMedicineRecord(data) {
+    const records = this.getRecords();
+    const newRecord = {
+      id: Date.now().toString(),
+      tankId: data.tankId,
+      fishId: data.fishId || null,
+      type: 'medicine',
+      medicineName: data.medicineName || '',
+      dosage: data.dosage || '',
+      startDate: data.startDate || data.createdAt || new Date().toISOString(),
+      duration: data.duration || null,
+      notes: data.notes || '',
+      createdAt: data.createdAt || new Date().toISOString()
+    };
+    records.push(newRecord);
+    safeStorage.setItem(this.KEYS.RECORDS, JSON.stringify(records));
+    
+    // 如果有疗程，自动创建停药提醒
+    if (data.duration) {
+      const endDate = new Date(newRecord.startDate);
+      endDate.setDate(endDate.getDate() + data.duration);
+      
+      // 创建停药提醒
+      this.addReminder({
+        tankId: data.tankId,
+        type: 'medicine_stop',
+        cycleDays: data.duration,
+        enabled: true,
+        medicineRecordId: newRecord.id,
+        medicineName: data.medicineName
+      });
+    }
+    
+    return newRecord;
+  },
+
+  // 获取某缸的用药记录
+  getMedicineRecordsByTank(tankId) {
+    return this.getRecords().filter(r => r.tankId === tankId && r.type === 'medicine');
+  },
+
+  // 获取进行中的疗程
+  getActiveMedicineTreatments() {
+    const records = this.getRecords().filter(r => r.type === 'medicine' && r.duration);
+    const now = new Date();
+    
+    return records.filter(r => {
+      const startDate = new Date(r.startDate);
+      const endDate = new Date(startDate);
+      endDate.setDate(endDate.getDate() + r.duration);
+      return endDate >= now;
+    });
+  },
+
+  // 删除记录
+  deleteRecord(id) {
+    const records = this.getRecords().filter(r => r.id !== id);
+    safeStorage.setItem(this.KEYS.RECORDS, JSON.stringify(records));
+  },
+
+  // 获取某缸某类型的最后一条记录
+  getLastRecord(tankId, type) {
+    const records = this.getRecordsByTank(tankId)
+      .filter(r => r.type === type)
+      .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+    return records[0] || null;
+  },
+
+  // ============ 提醒操作 ============
+
+  // 获取所有提醒规则
+  getReminders() {
+    return JSON.parse(safeStorage.getItem(this.KEYS.REMINDERS) || '[]');
+  },
+
+  // 获取某缸的提醒
+  getRemindersByTank(tankId) {
+    return this.getReminders().filter(r => r.tankId === tankId);
+  },
+
+  // 添加提醒规则
+  addReminder(reminder) {
+    const reminders = this.getReminders();
+    const newReminder = {
+      id: Date.now().toString(),
+      tankId: reminder.tankId,
+      type: reminder.type, // water_change, filter_clean
+      cycleDays: reminder.cycleDays || 7,
+      enabled: reminder.enabled !== false,
+      lastTriggered: null,
+      createdAt: new Date().toISOString()
+    };
+    reminders.push(newReminder);
+    safeStorage.setItem(this.KEYS.REMINDERS, JSON.stringify(reminders));
+    return newReminder;
+  },
+
+  // 更新提醒规则
+  updateReminder(id, updates) {
+    const reminders = this.getReminders();
+    const index = reminders.findIndex(r => r.id === id);
+    if (index !== -1) {
+      reminders[index] = { ...reminders[index], ...updates };
+      safeStorage.setItem(this.KEYS.REMINDERS, JSON.stringify(reminders));
+      return reminders[index];
+    }
+    return null;
+  },
+
+  // 删除提醒规则
+  deleteReminder(id) {
+    const reminders = this.getReminders().filter(r => r.id !== id);
+    safeStorage.setItem(this.KEYS.REMINDERS, JSON.stringify(reminders));
+  },
+
+  // 获取下次提醒时间
+  getNextReminderTime(reminder) {
+    const lastRecord = this.getLastRecord(reminder.tankId, reminder.type);
+    if (!lastRecord) {
+      return new Date();
+    }
+    const lastDate = new Date(lastRecord.createdAt);
+    return new Date(lastDate.getTime() + reminder.cycleDays * 24 * 60 * 60 * 1000);
+  },
+
+  // ============ 设置操作 ============
+
+  // 获取设置
+  getSettings() {
+    return JSON.parse(safeStorage.getItem(this.KEYS.SETTINGS) || '{}');
+  },
+
+  // 更新设置
+  updateSettings(updates) {
+    const settings = this.getSettings();
+    const newSettings = { ...settings, ...updates };
+    safeStorage.setItem(this.KEYS.SETTINGS, JSON.stringify(newSettings));
+    return newSettings;
+  },
+
+  // ============ 数据导出 ============
+
+  // 导出所有数据
+  exportData() {
+    return {
+      version: '1.0',
+      exportAt: new Date().toISOString(),
+      tanks: this.getTanks(),
+      fish: this.getFish(),
+      records: this.getRecords(),
+      reminders: this.getReminders(),
+      settings: this.getSettings()
+    };
+  },
+
+  // 导入数据
+  importData(data) {
+    if (data.tanks) safeStorage.setItem(this.KEYS.TANKS, JSON.stringify(data.tanks));
+    if (data.fish) safeStorage.setItem(this.KEYS.FISH, JSON.stringify(data.fish));
+    if (data.records) safeStorage.setItem(this.KEYS.RECORDS, JSON.stringify(data.records));
+    if (data.reminders) safeStorage.setItem(this.KEYS.REMINDERS, JSON.stringify(data.reminders));
+    if (data.settings) safeStorage.setItem(this.KEYS.SETTINGS, JSON.stringify(data.settings));
+  },
+
+  // 清空所有数据
+  clearAll() {
+    Object.values(this.KEYS).forEach(key => {
+      safeStorage.removeItem(key);
+    });
+    this.init();
+  },
+
+  // ============ 统计 ============
+
+  // 获取缸的统计信息
+  getTankStats(tankId) {
+    const records = this.getRecordsByTank(tankId);
+    const lastWaterChange = records.filter(r => r.type === 'water_change').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    const lastFilterClean = records.filter(r => r.type === 'filter_clean').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    
+    return {
+      fishCount: this.getFishByTank(tankId).length,
+      recordCount: records.length,
+      lastWaterChange: lastWaterChange ? new Date(lastWaterChange.createdAt) : null,
+      lastFilterClean: lastFilterClean ? new Date(lastFilterClean.createdAt) : null
+    };
+  }
+};
+
+// 初始化
+Storage.init();
+StorageWarning.init();
+
+  </script>
+  <script>
+/**
+ * 鱼记 - 语音录入模块
+ * 基于 Web Speech API 实现中文语音识别
+ */
+
+const Speech = {
+  // 语音识别状态
+  isListening: false,
+  recognition: null,
+
+  // 初始化语音识别
+  init() {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      console.warn('当前浏览器不支持语音识别');
+      return false;
+    }
+
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    this.recognition = new SpeechRecognition();
+    
+    // 配置
+    this.recognition.continuous = false;
+    this.recognition.interimResults = false;
+    this.recognition.lang = 'zh-CN'; // 简体中文
+    this.recognition.maxAlternatives = 1;
+
+    // 事件绑定
+    this.recognition.onstart = () => {
+      this.isListening = true;
+      this.onStart && this.onStart();
+    };
+
+    this.recognition.onresult = (event) => {
+      const results = event.results;
+      const transcript = results[results.length - 1][0].transcript;
+      this.isListening = false;
+      this.onResult && this.onResult(transcript);
+    };
+
+    this.recognition.onerror = (event) => {
+      this.isListening = false;
+      this.onError && this.onError(event.error);
+    };
+
+    this.recognition.onend = () => {
+      this.isListening = false;
+      this.onEnd && this.onEnd();
+    };
+
+    return true;
+  },
+
+  // 开始监听
+  start() {
+    if (!this.recognition) {
+      this.init();
+    }
+    if (this.recognition && !this.isListening) {
+      try {
+        this.recognition.start();
+      } catch (e) {
+        console.error('语音识别启动失败:', e);
+      }
+    }
+  },
+
+  // 停止监听
+  stop() {
+    if (this.recognition && this.isListening) {
+      this.recognition.stop();
+    }
+  },
+
+  // 解析语音内容
+  parseCommand(text) {
+    const tanks = Storage.getTanks();
+    const result = {
+      success: false,
+      tankId: null,
+      tankName: null,
+      action: null,
+      amount: null,
+      raw: text,
+      // 批量操作相关
+      isBatch: false,
+      tankIds: [],
+      tankNames: [],
+      rangeStart: null,
+      rangeEnd: null
+    };
+
+    // 统一文本
+    const normalized = text.trim().toLowerCase()
+      .replace(/\s+/g, '')
+      .replace(/三/g, '3')
+      .replace(/二/g, '2')
+      .replace(/一/g, '1')
+      .replace(/四/g, '4')
+      .replace(/五/g, '5')
+      .replace(/六/g, '6')
+      .replace(/七/g, '7')
+      .replace(/八/g, '8')
+      .replace(/九/g, '9')
+      .replace(/十/g, '10')
+      .replace(/零/g, '0')
+      .replace(/分之一/g, '分之')
+      .replace(/层/g, '')
+      .replace(/遍/g, '');
+
+    // 检测是否包含"所有"或"全部"
+    const isAll = normalized.includes('所有') || normalized.includes('全部');
+    
+    // 解析范围模式："1到10号缸"、"1-10号"、"1至10"
+    const rangePatterns = [
+      /(\d+)[到至\-~](?:(?:第)?(\d+))?号?缸?/,
+      /(?:第)?(\d+)号?(?:到|至|\-|~)(?:第)?(\d+)号?/,
+      /(\d+)号?(?:到|至|\-|~)(?:第)?(\d+)号?缸?/
+    ];
+    
+    let rangeMatch = null;
+    for (const pattern of rangePatterns) {
+      const match = normalized.match(pattern);
+      if (match) {
+        rangeMatch = {
+          start: parseInt(match[1]),
+          end: parseInt(match[2]) || parseInt(match[1])
+        };
+        break;
+      }
+    }
+
+    // 识别操作类型（必须在解析缸之前）
+    if (normalized.includes('换水') || normalized.includes('换了水') || normalized.includes('换了')) {
+      result.action = 'water_change';
+    } else if (normalized.includes('喂食') || normalized.includes('喂了') || normalized.includes('吃了')) {
+      result.action = 'feeding';
+    } else if (normalized.includes('滤棉') || normalized.includes('洗滤') || normalized.includes('清洗滤') || normalized.includes('洗了滤')) {
+      result.action = 'filter_clean';
+    } else if (normalized.includes('药') || normalized.includes('下药') || normalized.includes('用药') || normalized.includes('撒药')) {
+      result.action = 'medicine';
+    }
+
+    // 解析缸范围或全部
+    if (isAll) {
+      // 所有缸
+      result.isBatch = true;
+      result.tankIds = tanks.map(t => t.id);
+      result.tankNames = tanks.map(t => t.name);
+    } else if (rangeMatch) {
+      // 范围选择
+      result.isBatch = true;
+      result.rangeStart = rangeMatch.start;
+      result.rangeEnd = rangeMatch.end;
+      
+      // 查找匹配的缸（按名称中的数字匹配）
+      tanks.forEach(tank => {
+        const tankNum = tank.name.match(/\d+/);
+        if (tankNum) {
+          const num = parseInt(tankNum[0]);
+          if (num >= rangeMatch.start && num <= rangeMatch.end) {
+            result.tankIds.push(tank.id);
+            result.tankNames.push(tank.name);
+          }
+        }
+      });
+    } else {
+      // 单缸识别
+      for (const tank of tanks) {
+        const tankName = tank.name.toLowerCase();
+        if (normalized.includes(tankName) || normalized.includes(tank.location)) {
+          result.tankId = tank.id;
+          result.tankName = tank.name;
+          break;
+        }
+      }
+    }
+
+    // 识别换水量
+    if (result.action === 'water_change') {
+      // 匹配 "三分之一"、"1/3"、"30%"、"换了三成" 等
+      const fractionMatch = normalized.match(/(\d+)分之(\d+)/);
+      if (fractionMatch) {
+        result.amount = Math.round((parseInt(fractionMatch[2]) / parseInt(fractionMatch[1])) * 100);
+      }
+
+      const percentMatch = normalized.match(/(\d+)[%％]/) || normalized.match(/换了?(\d+)成/);
+      if (percentMatch) {
+        result.amount = parseInt(percentMatch[1]);
+        if (normalized.includes('成')) {
+          result.amount = result.amount * 10;
+        }
+      }
+
+      if (normalized.includes('一半') || normalized.includes('二分之一')) {
+        result.amount = 50;
+      }
+
+      // 默认三分之一
+      if (!result.amount) {
+        result.amount = 33;
+      }
+    }
+
+    // 识别喂食量
+    if (result.action === 'feeding') {
+      const amountMatch = text.match(/\d+/g);
+      if (amountMatch) {
+        result.amount = parseInt(amountMatch[0]);
+      } else {
+        result.amount = 1; // 默认1克
+      }
+    }
+    
+    // 识别药物名称和用量
+    if (result.action === 'medicine') {
+      // 常见药物名称
+      const medicineNames = ['甲基蓝', '土霉素', '黄粉', '高锰酸钾', '庆大霉素', '痢特灵', '大白片', '二氧化氯', '盐', '大盐', '白点净', '万能药', '白毛药', '内寄药', '外寄药'];
+      
+      for (const medicine of medicineNames) {
+        if (normalized.includes(medicine) || text.includes(medicine)) {
+          result.medicineName = medicine;
+          break;
+        }
+      }
+      
+      // 如果没识别到，尝试从文本中提取
+      if (!result.medicineName) {
+        // 匹配 "下了XX" 或 "用了XX" 等模式
+        const medicinePattern = /(?:下了|用了|投了|撒了|放了大?)(\w{2,6})/;
+        const match = text.match(medicinePattern);
+        if (match && match[1]) {
+          result.medicineName = match[1];
+        }
+      }
+      
+      // 识别用量（毫升、颗、片、包等单位）
+      const dosageMatch = text.match(/(\d+(?:\.\d+)?)\s*(毫升|ml|克|g|颗|片|包|粒|升|L)/i);
+      if (dosageMatch) {
+        result.dosage = dosageMatch[1] + dosageMatch[2];
+      } else {
+        // 尝试只匹配数字
+        const numMatch = text.match(/\d+/);
+        if (numMatch) {
+          result.dosage = numMatch[0];
+        } else {
+          result.dosage = '适量';
+        }
+      }
+    }
+
+    // 判断是否解析成功
+    if (result.isBatch) {
+      // 批量模式需要缸名列表和操作类型
+      result.success = result.tankIds.length > 0 && result.action !== null;
+    } else {
+      // 单缸模式
+      result.success = result.tankId && result.action !== null;
+    }
+
+    return result;
+  },
+
+  // 生成友好的语音反馈
+  getFeedbackText(parseResult) {
+    if (!parseResult.success) {
+      if (!parseResult.tankId && !parseResult.action && !parseResult.isBatch) {
+        return '没有听清缸名和操作，请再说一遍';
+      } else if (!parseResult.tankId && !parseResult.isBatch) {
+        return '没有听清缸名，请说清楚是哪个鱼缸';
+      } else if (!parseResult.action) {
+        return '没有听清操作类型，请说换水、喂食、洗滤棉或用药';
+      } else if (parseResult.isBatch && parseResult.tankIds.length === 0) {
+        return '没有找到对应的鱼缸，请检查缸号';
+      }
+    }
+
+    let tankDesc = '';
+    let actionText = '';
+
+    // 批量模式反馈
+    if (parseResult.isBatch) {
+      const count = parseResult.tankIds.length;
+      if (count === 0) {
+        return '没有找到对应的鱼缸';
+      }
+      
+      if (parseResult.rangeStart !== null) {
+        tankDesc = `${parseResult.rangeStart}到${parseResult.rangeEnd}号缸`;
+      } else {
+        tankDesc = `${count}个鱼缸`;
+      }
+    } else {
+      tankDesc = parseResult.tankName;
+    }
+
+    switch (parseResult.action) {
+      case 'water_change':
+        actionText = `换水${parseResult.amount}%`;
+        break;
+      case 'feeding':
+        actionText = `喂食${parseResult.amount}克`;
+        break;
+      case 'filter_clean':
+        actionText = '清洗滤棉';
+        break;
+      case 'medicine':
+        actionText = parseResult.medicineName ? `用药：${parseResult.medicineName}` : '用药';
+        if (parseResult.dosage) {
+          actionText += `，${parseResult.dosage}`;
+        }
+        break;
+    }
+
+    return `已识别：${tankDesc}，${actionText}`;
+  },
+
+  // 检查浏览器是否支持语音识别
+  isSupported() {
+    return ('webkitSpeechRecognition' in window) || ('SpeechRecognition' in window);
+  }
+};
+
+  </script>
+  <script>
+/**
+ * 鱼记 - 提醒通知模块
+ * 基于 Notification API 和 Service Worker 实现周期提醒
+ */
+
+const NotificationManager = {
+  // 检查通知权限
+  async checkPermission() {
+    if (!('Notification' in window)) {
+      return 'unsupported';
+    }
+    return Notification.permission; // 'granted', 'denied', 'default'
+  },
+
+  // 请求通知权限
+  async requestPermission() {
+    if (!('Notification' in window)) {
+      return 'unsupported';
+    }
+    
+    try {
+      const permission = await Notification.requestPermission();
+      return permission;
+    } catch (e) {
+      console.error('请求通知权限失败:', e);
+      return 'denied';
+    }
+  },
+
+  // 发送通知
+  async send(title, options = {}) {
+    const permission = await this.checkPermission();
+    
+    if (permission === 'granted') {
+      const defaultOptions = {
+        icon: 'icons/icon-192.png',
+        badge: 'icons/icon-192.png',
+        vibrate: [200, 100, 200],
+        tag: 'yuji-reminder',
+        requireInteraction: true,
+        ...options
+      };
+      
+      try {
+        const notification = new Notification(title, defaultOptions);
+        
+        notification.onclick = () => {
+          window.focus();
+          notification.close();
+          // 可以触发打开相应页面的逻辑
+          if (options.onClick) {
+            options.onClick();
+          }
+        };
+        
+        return notification;
+      } catch (e) {
+        console.error('发送通知失败:', e);
+      }
+    }
+    
+    return null;
+  },
+
+  // 发送缸的提醒通知
+  async sendTankReminder(tank, reminder) {
+    const tankName = tank.name;
+    let typeText = '';
+    let bodyText = '';
+    
+    switch (reminder.type) {
+      case 'water_change':
+        typeText = '换水';
+        bodyText = `鱼缸"${tankName}"该换水了！建议每${reminder.cycleDays}天换一次水。`;
+        break;
+      case 'filter_clean':
+        typeText = '滤棉清洗';
+        bodyText = `鱼缸"${tankName}"该清洗滤棉了！建议每${reminder.cycleDays}天清洗一次。`;
+        break;
+      case 'medicine_stop':
+        typeText = '停药提醒';
+        const medicineName = reminder.medicineName || '药物';
+        bodyText = `鱼缸"${tankName}"使用的"${medicineName}"疗程已结束，请记得停药！`;
+        break;
+    }
+    
+    return this.send(`🐟 ${typeText}提醒`, {
+      body: bodyText,
+      tag: `yuji-${reminder.type}-${tank.id}`,
+      data: {
+        tankId: tank.id,
+        reminderType: reminder.type
+      }
+    });
+  },
+
+  // 检查并发送到期的提醒
+  async checkAndNotify() {
+    const settings = Storage.getSettings();
+    if (!settings.notificationsEnabled) {
+      return;
+    }
+
+    const permission = await this.checkPermission();
+    if (permission !== 'granted') {
+      return;
+    }
+
+    const reminders = Storage.getReminders().filter(r => r.enabled);
+    const tanks = Storage.getTanks();
+    const now = new Date();
+
+    for (const reminder of reminders) {
+      const tank = tanks.find(t => t.id === reminder.tankId);
+      if (!tank) continue;
+
+      const nextTime = Storage.getNextReminderTime(reminder);
+      const timeDiff = nextTime.getTime() - now.getTime();
+      
+      // 提前1小时提醒，或者刚好到点
+      if (timeDiff <= 60 * 60 * 1000 && timeDiff > -60 * 60 * 1000) {
+        // 检查是否已经提醒过（一天内不重复提醒）
+        const lastTriggered = reminder.lastTriggered ? new Date(reminder.lastTriggered) : null;
+        if (!lastTriggered || (now.getTime() - lastTriggered.getTime()) > 24 * 60 * 60 * 1000) {
+          await this.sendTankReminder(tank, reminder);
+          Storage.updateReminder(reminder.id, { lastTriggered: now.toISOString() });
+        }
+      }
+    }
+  },
+
+  // 启动定时检查
+  startPeriodicCheck(intervalMs = 60000) {
+    // 立即检查一次
+    this.checkAndNotify();
+    
+    // 定时检查
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+    }
+    
+    this.checkInterval = setInterval(() => {
+      this.checkAndNotify();
+    }, intervalMs);
+
+    // 如果支持 Service Worker，也通知它开始检查
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'START_REMINDER_CHECKS' });
+    }
+  },
+
+  // 停止定时检查
+  stopPeriodicCheck() {
+    if (this.checkInterval) {
+      clearInterval(this.checkInterval);
+      this.checkInterval = null;
+    }
+
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.controller.postMessage({ type: 'STOP_REMINDER_CHECKS' });
+    }
+  },
+
+  // 计算距离下次提醒的时间
+  getTimeUntilReminder(reminder) {
+    const nextTime = Storage.getNextReminderTime(reminder);
+    const now = new Date();
+    const diff = nextTime.getTime() - now.getTime();
+    
+    if (diff < 0) {
+      return { overdue: true, days: Math.abs(Math.floor(diff / (24 * 60 * 60 * 1000))) };
+    }
+    
+    const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+    const hours = Math.floor((diff % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+    
+    return { overdue: false, days, hours };
+  },
+
+  // 格式化倒计时显示
+  formatCountdown(timeInfo) {
+    if (timeInfo.overdue) {
+      if (timeInfo.days === 0) {
+        return { text: '已到期', class: 'danger' };
+      }
+      return { text: `已逾期${timeInfo.days}天`, class: 'danger' };
+    }
+    
+    if (timeInfo.days === 0) {
+      if (timeInfo.hours === 0) {
+        return { text: '即将到期', class: 'warning' };
+      }
+      return { text: `${timeInfo.hours}小时后`, class: 'warning' };
+    }
+    
+    return { text: `${timeInfo.days}天后`, class: 'safe' };
+  }
+};
+
+  </script>
+  <script>
+/**
+ * 鱼记 - 主应用逻辑
+ */
+
+// 全局状态
+const App = {
+  currentPage: 'tanks',
+  currentTank: null,
+  filterType: 'all',
+  filterTankId: null,
+  speechSupported: false,
+  // 批量操作相关
+  batchMode: false,
+  selectedTanks: new Set()
+};
+
+// ============ 初始化 ============
+
+document.addEventListener('DOMContentLoaded', async () => {
+  // 注册 Service Worker
+  registerServiceWorker();
+  
+  // 初始化语音
+  initSpeech();
+  
+  // 绑定导航
+  bindNavigation();
+  
+  // 绑定全局事件
+  bindGlobalEvents();
+  
+  // 初始化通知
+  initNotifications();
+  
+  // 显示首页
+  showPage('tanks');
+});
+
+// 注册 Service Worker
+function registerServiceWorker() { /* single file mode - no SW */ } catch (e) {
+      console.log('Service Worker 注册失败:', e);
+    }
+  }
+}
+
+// 初始化语音
+function initSpeech() {
+  App.speechSupported = Speech.isSupported();
+  
+  Speech.onStart = () => {
+    const voiceBtn = document.getElementById('voiceBtn');
+    const voiceStatus = document.getElementById('voiceStatus');
+    if (voiceBtn) voiceBtn.classList.add('recording');
+    if (voiceStatus) voiceStatus.textContent = '正在聆听...';
+  };
+  
+  Speech.onResult = (transcript) => {
+    const voiceStatus = document.getElementById('voiceStatus');
+    const voiceResult = document.getElementById('voiceResult');
+    
+    if (voiceStatus) voiceStatus.textContent = '正在解析...';
+    
+    // 解析命令
+    const parseResult = Speech.parseCommand(transcript);
+    const feedback = Speech.getFeedbackText(parseResult);
+    
+    if (voiceResult) voiceResult.textContent = feedback;
+    
+    // 如果解析成功，自动创建记录
+    if (parseResult.success) {
+      setTimeout(() => {
+        createRecordFromSpeech(parseResult);
+        closeModal('voiceModal');
+      }, 1000);
+    }
+  };
+  
+  Speech.onError = (error) => {
+    const voiceStatus = document.getElementById('voiceStatus');
+    const voiceResult = document.getElementById('voiceResult');
+    
+    if (voiceBtn) document.getElementById('voiceBtn').classList.remove('recording');
+    if (voiceStatus) {
+      if (error === 'no-speech') {
+        voiceStatus.textContent = '没有检测到语音，请再说一遍';
+      } else if (error === 'not-allowed') {
+        voiceStatus.textContent = '麦克风权限被拒绝';
+      } else {
+        voiceStatus.textContent = '语音识别出错，请重试';
+      }
+    }
+  };
+  
+  Speech.onEnd = () => {
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (voiceBtn) voiceBtn.classList.remove('recording');
+  };
+}
+
+// 初始化通知
+async function initNotifications() {
+  const permission = await NotificationManager.checkPermission();
+  const settings = Storage.getSettings();
+  
+  if (permission === 'granted' && settings.notificationsEnabled) {
+    NotificationManager.startPeriodicCheck();
+  }
+}
+
+// ============ 导航 ============
+
+function bindNavigation() {
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', (e) => {
+      const page = e.currentTarget.dataset.page;
+      if (page) {
+        showPage(page);
+      }
+    });
+  });
+}
+
+function showPage(pageName) {
+  App.currentPage = pageName;
+  
+  // 更新导航高亮
+  document.querySelectorAll('.nav-item').forEach(item => {
+    item.classList.toggle('active', item.dataset.page === pageName);
+  });
+  
+  // 更新页面显示
+  document.querySelectorAll('.page').forEach(page => {
+    page.classList.toggle('active', page.id === `page-${pageName}`);
+  });
+  
+  // 渲染页面内容
+  switch (pageName) {
+    case 'tanks':
+      renderTanksPage();
+      break;
+    case 'records':
+      renderRecordsPage();
+      break;
+    case 'reminders':
+      renderRemindersPage();
+      break;
+    case 'settings':
+      renderSettingsPage();
+      break;
+  }
+}
+
+// ============ 鱼缸页面 ============
+
+function renderTanksPage() {
+  const tanks = Storage.getTanks();
+  const container = document.getElementById('tanksList');
+  
+  // 隐藏静态空状态（如果存在）
+  const defaultEmptyState = document.getElementById('defaultEmptyState');
+  if (defaultEmptyState) {
+    defaultEmptyState.style.display = 'none';
+  }
+  
+  if (tanks.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z"/>
+          <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+          <circle cx="9" cy="9" r="1"/>
+          <circle cx="15" cy="9" r="1"/>
+        </svg>
+        <div class="empty-title">还没有鱼缸</div>
+        <div class="empty-desc">点击下方按钮添加第一个鱼缸</div>
+        <button class="btn btn-primary" onclick="showAddTankModal()">添加鱼缸</button>
+      </div>
+    `;
+    return;
+  }
+  
+  // 批量模式渲染
+  if (App.batchMode) {
+    document.body.classList.add('batch-mode');
+    let html = `
+      <div class="batch-actions-header">
+        <button class="batch-select-all" onclick="toggleSelectAll()">
+          ${App.selectedTanks.size === tanks.length ? '取消全选' : '全选'}
+        </button>
+        <span class="batch-select-range">共 ${tanks.length} 个鱼缸</span>
+      </div>
+    `;
+    
+    tanks.forEach(tank => {
+      const isSelected = App.selectedTanks.has(tank.id);
+      const fishCount = Storage.getFishByTank(tank.id).length;
+      
+      html += `
+        <div class="batch-card ${isSelected ? 'selected' : ''}" onclick="toggleTankSelection('${tank.id}')">
+          <div class="batch-checkbox">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+              <path d="M20 6L9 17l-5-5"/>
+            </svg>
+          </div>
+          <div class="batch-card-content">
+            <div class="tank-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M2 12h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 1 2-2h2"/>
+                <path d="M2 12c0-3 2-6 4-8"/>
+                <path d="M22 12c0-3-2-6-4-8"/>
+                <path d="M6 12v4"/>
+                <path d="M18 12v4"/>
+              </svg>
+            </div>
+            <div class="batch-card-info">
+              <div class="batch-card-title">${tank.name}</div>
+              <div class="batch-card-meta">${tank.location || '未设置位置'} · ${fishCount}条鱼</div>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `
+      <div style="padding: 0 16px; padding-top: 16px;">
+        <button class="btn btn-secondary btn-block" onclick="showAddTankModal()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 5v14M5 12h14"/>
+          </svg>
+          添加鱼缸
+        </button>
+      </div>
+    `;
+    
+    container.innerHTML = html;
+    updateBatchActionBar();
+    return;
+  }
+  
+  // 普通模式渲染
+  document.body.classList.remove('batch-mode');
+  let html = '';
+  
+  // 添加批量操作按钮（当有2个以上鱼缸时）
+  if (tanks.length >= 2) {
+    html = `
+      <div style="padding: 0 16px 16px;">
+        <button class="btn btn-secondary btn-block" onclick="enterBatchMode()" style="display: flex; align-items: center; justify-content: center;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right: 8px;">
+            <rect x="3" y="3" width="7" height="7"/>
+            <rect x="14" y="3" width="7" height="7"/>
+            <rect x="14" y="14" width="7" height="7"/>
+            <rect x="3" y="14" width="7" height="7"/>
+          </svg>
+          批量操作
+        </button>
+      </div>
+    `;
+  }
+  
+  tanks.forEach(tank => {
+    const reminders = Storage.getRemindersByTank(tank.id);
+    const waterReminder = reminders.find(r => r.type === 'water_change');
+    const fishCount = Storage.getFishByTank(tank.id).length;
+    
+    let countdown = null;
+    let countdownClass = 'safe';
+    
+    if (waterReminder && waterReminder.enabled) {
+      const timeInfo = NotificationManager.getTimeUntilReminder(waterReminder);
+      countdown = NotificationManager.formatCountdown(timeInfo);
+      countdownClass = countdown.class;
+    }
+    
+    html += `
+      <div class="card fade-in" onclick="showTankDetail('${tank.id}')">
+        <div class="card-header">
+          <div class="tank-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M2 12h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 1 2-2h2"/>
+              <path d="M2 12c0-3 2-6 4-8"/>
+              <path d="M22 12c0-3-2-6-4-8"/>
+              <path d="M6 12v4"/>
+              <path d="M18 12v4"/>
+            </svg>
+          </div>
+          <div style="flex: 1;">
+            <div class="card-title">${tank.name}</div>
+            <div class="card-meta">${tank.location || '未设置位置'} · ${fishCount}条鱼</div>
+          </div>
+          ${countdown ? `<span class="countdown-badge ${countdownClass}">${countdown.text}</span>` : ''}
+        </div>
+      </div>
+    `;
+  });
+  
+  html += `
+    <div style="padding: 0 16px;">
+      <button class="btn btn-secondary btn-block" onclick="showAddTankModal()">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 5v14M5 12h14"/>
+        </svg>
+        添加鱼缸
+      </button>
+    </div>
+  `;
+  
+  container.innerHTML = html;
+}
+
+// ============ 鱼缸详情页面 ============
+
+function showTankDetail(tankId) {
+  App.currentTank = Storage.getTank(tankId);
+  if (!App.currentTank) return;
+  
+  // 显示详情页
+  document.getElementById('tankDetailPage').classList.add('active');
+  
+  // 渲染详情内容
+  renderTankDetail();
+}
+
+function hideTankDetail() {
+  document.getElementById('tankDetailPage').classList.remove('active');
+  App.currentTank = null;
+}
+
+function renderTankDetail() {
+  const tank = App.currentTank;
+  if (!tank) return;
+  
+  // 头部信息
+  document.getElementById('tankDetailTitle').textContent = tank.name;
+  document.getElementById('tankDetailLocation').textContent = tank.location || '未设置位置';
+  
+  // 统计数据
+  const fish = Storage.getFishByTank(tank.id);
+  const records = Storage.getRecordsByTank(tank.id);
+  const waterRecords = records.filter(r => r.type === 'water_change');
+  const filterRecords = records.filter(r => r.type === 'filter_clean');
+  const medicineRecords = records.filter(r => r.type === 'medicine');
+  
+  document.getElementById('tankFishCount').textContent = fish.length;
+  document.getElementById('tankWaterCount').textContent = waterRecords.length;
+  document.getElementById('tankFilterCount').textContent = filterRecords.length;
+  
+  // 鱼列表
+  const fishList = document.getElementById('tankFishList');
+  if (fish.length === 0) {
+    fishList.innerHTML = '<div class="empty-state" style="padding: 30px;"><div class="empty-desc">暂无鱼</div></div>';
+  } else {
+    fishList.innerHTML = fish.map(f => `
+      <div class="list-item" onclick="event.stopPropagation(); showFishDetail('${f.id}')">
+        <div class="list-item-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/>
+            <path d="M12 6v2M12 16v2M6 12h2M16 12h2"/>
+          </svg>
+        </div>
+        <div class="list-item-content">
+          <div class="list-item-title">${f.name}</div>
+          <div class="list-item-meta">${f.species || '未分类'}</div>
+        </div>
+        <svg class="list-item-arrow" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 18l6-6-6-6"/>
+        </svg>
+      </div>
+    `).join('');
+  }
+  
+  // 换水记录
+  const waterList = document.getElementById('tankWaterList');
+  const lastWater = Storage.getLastRecord(tank.id, 'water_change');
+  if (lastWater) {
+    waterList.innerHTML = `
+      <div class="list-item">
+        <div class="list-item-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>
+          </svg>
+        </div>
+        <div class="list-item-content">
+          <div class="list-item-title">换水 ${lastWater.amount}%</div>
+          <div class="list-item-meta">${formatDate(lastWater.createdAt)}</div>
+        </div>
+        <button class="delete-btn" onclick="event.stopPropagation(); deleteRecord('${lastWater.id}')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+          </svg>
+        </button>
+      </div>
+    `;
+  } else {
+    waterList.innerHTML = '<div class="list-item"><div class="list-item-content"><div class="list-item-meta">暂无记录</div></div></div>';
+  }
+  
+  // 滤棉清洗记录
+  const filterList = document.getElementById('tankFilterList');
+  const lastFilter = Storage.getLastRecord(tank.id, 'filter_clean');
+  if (lastFilter) {
+    filterList.innerHTML = `
+      <div class="list-item">
+        <div class="list-item-icon">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="18" height="18" rx="2"/>
+            <path d="M3 9h18M9 21V9"/>
+          </svg>
+        </div>
+        <div class="list-item-content">
+          <div class="list-item-title">清洗滤棉</div>
+          <div class="list-item-meta">${formatDate(lastFilter.createdAt)}</div>
+        </div>
+        <button class="delete-btn" onclick="event.stopPropagation(); deleteRecord('${lastFilter.id}')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+          </svg>
+        </button>
+      </div>
+    `;
+  } else {
+    filterList.innerHTML = '<div class="list-item"><div class="list-item-content"><div class="list-item-meta">暂无记录</div></div></div>';
+  }
+  
+  // 用药记录
+  const medicineList = document.getElementById('tankMedicineList');
+  const medicineRecords = Storage.getRecords().filter(r => r.tankId === tank.id && r.type === 'medicine').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+  if (medicineRecords.length > 0) {
+    medicineList.innerHTML = medicineRecords.map(r => `
+      <div class="list-item">
+        <div class="list-item-icon" style="color: var(--medicine);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.5 20.5L3.5 13.5a4.95 4.95 0 0 1 7-7l7 7a4.95 4.95 0 0 1-7 7z"/>
+            <path d="M8.5 8.5l7 7"/>
+          </svg>
+        </div>
+        <div class="list-item-content">
+          <div class="list-item-title">${r.medicineName || '药物'} - ${r.dosage || ''}</div>
+          <div class="list-item-meta">${formatDate(r.createdAt)}${r.duration ? ` · ${r.duration}天疗程` : ''}</div>
+          ${r.notes ? `<div class="list-item-meta" style="margin-top: 2px; font-style: italic;">${r.notes}</div>` : ''}
+        </div>
+        <button class="delete-btn" onclick="event.stopPropagation(); deleteRecord('${r.id}')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+  } else {
+    medicineList.innerHTML = '<div class="list-item"><div class="list-item-content"><div class="list-item-meta">暂无记录</div></div></div>';
+  }
+}
+
+// ============ 记录页面 ============
+
+function renderRecordsPage() {
+  const records = Storage.filterRecords({
+    tankId: App.filterTankId,
+    type: App.filterType
+  });
+  
+  const container = document.getElementById('recordsList');
+  const tanks = Storage.getTanks();
+  
+  // 渲染过滤器
+  renderRecordFilters();
+  
+  if (records.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <div class="empty-title">暂无记录</div>
+        <div class="empty-desc">开始记录换水、喂食或清洗滤棉</div>
+      </div>
+    `;
+    return;
+  }
+  
+  // 按日期分组
+  const grouped = {};
+  records.forEach(record => {
+    const dateKey = formatDateGroup(record.createdAt);
+    if (!grouped[dateKey]) {
+      grouped[dateKey] = [];
+    }
+    grouped[dateKey].push(record);
+  });
+  
+  let html = '';
+  for (const [dateKey, dateRecords] of Object.entries(grouped)) {
+    html += `<div style="padding: 0 20px; font-size: 13px; color: var(--text-secondary); font-weight: 600; margin-top: 16px;">${dateKey}</div>`;
+    html += '<div class="timeline">';
+    
+    dateRecords.forEach(record => {
+      const tank = tanks.find(t => t.id === record.tankId);
+      let typeText = '';
+      let detailText = '';
+      let icon = '';
+      
+      switch (record.type) {
+        case 'water_change':
+          typeText = '换水';
+          detailText = `${record.amount}%`;
+          icon = '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>';
+          break;
+        case 'feeding':
+          typeText = '喂食';
+          if (record.mode === 'batch') {
+            detailText = `${record.totalAmount || record.amount}克（批次）`;
+          } else {
+            const fish = Storage.getFishById(record.fishId);
+            detailText = `${record.amount}克 - ${fish ? fish.name : '未知'}`;
+          }
+          icon = '<circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2M9 9h.01M15 9h.01"/>';
+          break;
+        case 'filter_clean':
+          typeText = '清洗滤棉';
+          detailText = '';
+          icon = '<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/>';
+          break;
+        case 'medicine':
+          typeText = '用药';
+          detailText = `${record.medicineName || '药物'} - ${record.dosage || ''}`;
+          if (record.duration) {
+            detailText += ` · ${record.duration}天疗程`;
+          }
+          icon = '<path d="M10.5 20.5L3.5 13.5a4.95 4.95 0 0 1 7-7l7 7a4.95 4.95 0 0 1-7 7z"/><path d="M8.5 8.5l7 7"/>';
+          break;
+      }
+      
+      html += `
+        <div class="timeline-item">
+          <div class="timeline-date">${formatTime(record.createdAt)}</div>
+          <div class="timeline-title">${tank ? tank.name : '未知鱼缸'} · ${typeText}</div>
+          <div class="timeline-desc">${detailText}</div>
+        </div>
+      `;
+    });
+    
+    html += '</div>';
+  }
+  
+  container.innerHTML = html;
+}
+
+function renderRecordFilters() {
+  const tanks = Storage.getTanks();
+  const filterBar = document.getElementById('recordFilterBar');
+  
+  let html = `
+    <div class="filter-chip ${!App.filterTankId ? 'active' : ''}" onclick="setRecordFilter(null, '${App.filterType}')">全部</div>
+    ${tanks.map(t => `
+      <div class="filter-chip ${App.filterTankId === t.id ? 'active' : ''}" onclick="setRecordFilter('${t.id}', '${App.filterType}')">${t.name}</div>
+    `).join('')}
+    <div style="flex-shrink: 0; width: 1px;"></div>
+  `;
+  
+  filterBar.innerHTML = html;
+  
+  // 类型过滤器
+  const typeFilterBar = document.getElementById('recordTypeFilterBar');
+  typeFilterBar.innerHTML = `
+    <div class="filter-chip ${App.filterType === 'all' ? 'active' : ''}" onclick="setRecordFilter('${App.filterTankId || ''}', 'all')">全部</div>
+    <div class="filter-chip ${App.filterType === 'water_change' ? 'active' : ''}" onclick="setRecordFilter('${App.filterTankId || ''}', 'water_change')">换水</div>
+    <div class="filter-chip ${App.filterType === 'feeding' ? 'active' : ''}" onclick="setRecordFilter('${App.filterTankId || ''}', 'feeding')">喂食</div>
+    <div class="filter-chip ${App.filterType === 'filter_clean' ? 'active' : ''}" onclick="setRecordFilter('${App.filterTankId || ''}', 'filter_clean')">滤棉</div>
+    <div class="filter-chip ${App.filterType === 'medicine' ? 'active' : ''}" onclick="setRecordFilter('${App.filterTankId || ''}', 'medicine')">用药</div>
+    <div style="flex-shrink: 0; width: 1px;"></div>
+  `;
+}
+
+function setRecordFilter(tankId, type) {
+  App.filterTankId = tankId || null;
+  App.filterType = type;
+  renderRecordsPage();
+}
+
+// ============ 提醒页面 ============
+
+function renderRemindersPage() {
+  const reminders = Storage.getReminders();
+  const tanks = Storage.getTanks();
+  const container = document.getElementById('remindersList');
+  
+  if (reminders.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+          <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9M13.73 21a2 2 0 0 1-3.46 0"/>
+        </svg>
+        <div class="empty-title">暂无提醒规则</div>
+        <div class="empty-desc">添加鱼缸后会自动创建默认提醒</div>
+      </div>
+    `;
+    return;
+  }
+  
+  // 按缸分组
+  const grouped = {};
+  reminders.forEach(r => {
+    if (!grouped[r.tankId]) {
+      grouped[r.tankId] = [];
+    }
+    grouped[r.tankId].push(r);
+  });
+  
+  let html = '';
+  for (const [tankId, tankReminders] of Object.entries(grouped)) {
+    const tank = tanks.find(t => t.id === tankId);
+    if (!tank) continue;
+    
+    html += `<div style="padding: 0 20px; font-size: 13px; color: var(--text-secondary); font-weight: 600; margin-top: 16px; margin-bottom: 8px;">${tank.name}</div>`;
+    
+    tankReminders.forEach(reminder => {
+      const timeInfo = NotificationManager.getTimeUntilReminder(reminder);
+      const countdown = NotificationManager.formatCountdown(timeInfo);
+      const typeText = reminder.type === 'water_change' ? '换水' : 
+                       reminder.type === 'filter_clean' ? '清洗滤棉' : 
+                       reminder.type === 'medicine_stop' ? `停药提醒(${reminder.medicineName || '药物'})` : '其他';
+      
+      html += `
+        <div class="reminder-card">
+          <div class="reminder-header">
+            <div class="reminder-tank">${tank.name}</div>
+            <div class="reminder-type">${typeText}</div>
+          </div>
+          <div class="reminder-content">
+            <div class="reminder-info">
+              <div class="reminder-cycle">每 ${reminder.cycleDays} 天</div>
+              <div class="reminder-next">${countdown.text}</div>
+            </div>
+            <label class="switch">
+              <input type="checkbox" ${reminder.enabled ? 'checked' : ''} onchange="toggleReminder('${reminder.id}', this.checked)">
+            </label>
+          </div>
+          <div style="padding: 0 16px 12px; display: flex; gap: 8px;">
+            <button class="btn btn-ghost btn-sm" onclick="editReminder('${reminder.id}')">修改周期</button>
+            <button class="btn btn-ghost btn-sm" onclick="deleteReminder('${reminder.id}')" style="color: var(--danger);">删除</button>
+          </div>
+        </div>
+      `;
+    });
+  }
+  
+  container.innerHTML = html;
+}
+
+function toggleReminder(id, enabled) {
+  Storage.updateReminder(id, { enabled });
+  showToast(enabled ? '提醒已开启' : '提醒已关闭');
+}
+
+function editReminder(id) {
+  const reminder = Storage.getReminders().find(r => r.id === id);
+  if (!reminder) return;
+  
+  document.getElementById('editReminderId').value = id;
+  document.getElementById('editReminderCycle').value = reminder.cycleDays;
+  openModal('editReminderModal');
+}
+
+function saveReminderCycle() {
+  const id = document.getElementById('editReminderId').value;
+  const cycle = parseInt(document.getElementById('editReminderCycle').value);
+  
+  if (cycle > 0) {
+    Storage.updateReminder(id, { cycleDays: cycle });
+    closeModal('editReminderModal');
+    renderRemindersPage();
+    showToast('提醒周期已更新');
+  }
+}
+
+function deleteReminder(id) {
+  if (confirm('确定要删除这个提醒规则吗？')) {
+    Storage.deleteReminder(id);
+    renderRemindersPage();
+    showToast('提醒已删除');
+  }
+}
+
+// ============ 设置页面 ============
+
+function renderSettingsPage() {
+  const settings = Storage.getSettings();
+  
+  // 通知开关
+  const notifyToggle = document.getElementById('notifyToggle');
+  if (notifyToggle) {
+    notifyToggle.checked = settings.notificationsEnabled;
+    notifyToggle.onchange = async (e) => {
+      if (e.target.checked) {
+        const permission = await NotificationManager.requestPermission();
+        if (permission === 'granted') {
+          Storage.updateSettings({ notificationsEnabled: true });
+          NotificationManager.startPeriodicCheck();
+          showToast('已开启通知');
+        } else {
+          e.target.checked = false;
+          showToast('请允许通知权限', 'error');
+        }
+      } else {
+        Storage.updateSettings({ notificationsEnabled: false });
+        NotificationManager.stopPeriodicCheck();
+        showToast('已关闭通知');
+      }
+    };
+  }
+  
+  // 语音反馈开关
+  const voiceFeedbackToggle = document.getElementById('voiceFeedbackToggle');
+  if (voiceFeedbackToggle) {
+    voiceFeedbackToggle.checked = settings.voiceFeedback !== false;
+    voiceFeedbackToggle.onchange = (e) => {
+      Storage.updateSettings({ voiceFeedback: e.target.checked });
+    };
+  }
+}
+
+function showManageTanks() {
+  const tanks = Storage.getTanks();
+  const container = document.getElementById('manageTanksList');
+  
+  if (tanks.length === 0) {
+    container.innerHTML = '<div class="empty-desc" style="text-align: center; padding: 20px;">暂无鱼缸</div>';
+  } else {
+    container.innerHTML = tanks.map(t => `
+      <div class="list-item">
+        <div class="list-item-content">
+          <div class="list-item-title">${t.name}</div>
+          <div class="list-item-meta">${t.location || '未设置位置'}</div>
+        </div>
+        <button class="btn btn-ghost btn-sm" onclick="editTank('${t.id}')">编辑</button>
+        <button class="delete-btn" onclick="deleteTank('${t.id}')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+  }
+  
+  openModal('manageTanksModal');
+}
+
+function editTank(id) {
+  const tank = Storage.getTank(id);
+  if (!tank) return;
+  
+  document.getElementById('editTankId').value = id;
+  document.getElementById('editTankName').value = tank.name;
+  document.getElementById('editTankLocation').value = tank.location || '';
+  openModal('editTankModal');
+}
+
+function saveTank() {
+  const id = document.getElementById('editTankId').value;
+  const name = document.getElementById('editTankName').value.trim();
+  const location = document.getElementById('editTankLocation').value.trim();
+  
+  if (!name) {
+    showToast('请输入鱼缸名称', 'error');
+    return;
+  }
+  
+  if (id) {
+    Storage.updateTank(id, { name, location });
+    showToast('鱼缸已更新');
+  }
+  
+  closeModal('editTankModal');
+  showManageTanks();
+  renderTanksPage();
+}
+
+function deleteTank(id) {
+  if (confirm('确定要删除这个鱼缸吗？相关记录和提醒也会一并删除。')) {
+    Storage.deleteTank(id);
+    showToast('鱼缸已删除');
+    showManageTanks();
+    renderTanksPage();
+  }
+}
+
+function showManageFish() {
+  const fish = Storage.getFish();
+  const tanks = Storage.getTanks();
+  const container = document.getElementById('manageFishList');
+  
+  if (fish.length === 0) {
+    container.innerHTML = '<div class="empty-desc" style="text-align: center; padding: 20px;">暂无鱼</div>';
+  } else {
+    container.innerHTML = fish.map(f => {
+      const tank = tanks.find(t => t.id === f.tankId);
+      return `
+        <div class="list-item">
+          <div class="list-item-content">
+            <div class="list-item-title">${f.name}</div>
+            <div class="list-item-meta">${tank ? tank.name : '未知缸'} · ${f.species || '未分类'}</div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="editFish('${f.id}')">编辑</button>
+          <button class="delete-btn" onclick="deleteFish('${f.id}')">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+            </svg>
+          </button>
+        </div>
+      `;
+    }).join('');
+  }
+  
+  openModal('manageFishModal');
+}
+
+function editFish(id) {
+  const f = Storage.getFishById(id);
+  if (!f) return;
+  
+  document.getElementById('editFishId').value = id;
+  document.getElementById('editFishName').value = f.name;
+  document.getElementById('editFishSpecies').value = f.species || '';
+  document.getElementById('editFishTank').value = f.tankId;
+  openModal('editFishModal');
+}
+
+function saveFish() {
+  const id = document.getElementById('editFishId').value;
+  const name = document.getElementById('editFishName').value.trim();
+  const species = document.getElementById('editFishSpecies').value.trim();
+  const tankId = document.getElementById('editFishTank').value;
+  
+  if (!name) {
+    showToast('请输入鱼名', 'error');
+    return;
+  }
+  
+  Storage.updateFish(id, { name, species, tankId });
+  showToast('鱼已更新');
+  closeModal('editFishModal');
+  showManageFish();
+}
+
+function deleteFish(id) {
+  if (confirm('确定要删除这条鱼吗？')) {
+    Storage.deleteFish(id);
+    showToast('鱼已删除');
+    showManageFish();
+  }
+}
+
+function exportData() {
+  const data = Storage.exportData();
+  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `鱼记备份_${formatDateForFile(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  showToast('数据已导出');
+}
+
+function importData() {
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = '.json';
+  input.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const data = JSON.parse(event.target.result);
+        if (confirm('导入将覆盖现有数据，确定继续吗？')) {
+          Storage.importData(data);
+          showToast('数据已导入');
+          showPage('tanks');
+        }
+      } catch (e) {
+        showToast('文件格式错误', 'error');
+      }
+    };
+    reader.readAsText(file);
+  };
+  input.click();
+}
+
+function clearAllData() {
+  if (confirm('确定要清空所有数据吗？此操作不可恢复！')) {
+    if (confirm('再次确认：所有鱼缸、记录、数据都将被删除！')) {
+      Storage.clearAll();
+      showToast('所有数据已清空');
+      showPage('tanks');
+    }
+  }
+}
+
+// ============ 模态框 ============
+
+function openModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.add('show');
+    document.body.style.overflow = 'hidden';
+  }
+}
+
+function closeModal(modalId) {
+  const modal = document.getElementById(modalId);
+  if (modal) {
+    modal.classList.remove('show');
+    document.body.style.overflow = '';
+  }
+}
+
+function showAddTankModal() {
+  document.getElementById('newTankName').value = '';
+  document.getElementById('newTankLocation').value = '';
+  openModal('addTankModal');
+}
+
+function addTank() {
+  const name = document.getElementById('newTankName').value.trim();
+  const location = document.getElementById('newTankLocation').value.trim();
+  
+  if (!name) {
+    showToast('请输入鱼缸名称', 'error');
+    return;
+  }
+  
+  Storage.addTank({ name, location });
+  closeModal('addTankModal');
+  renderTanksPage();
+  showToast('鱼缸已添加');
+}
+
+function showAddFishModal(tankId) {
+  const tanks = Storage.getTanks();
+  const select = document.getElementById('newFishTank');
+  
+  select.innerHTML = tanks.map(t => 
+    `<option value="${t.id}" ${t.id === (tankId || App.currentTank?.id) ? 'selected' : ''}>${t.name}</option>`
+  ).join('');
+  
+  document.getElementById('newFishName').value = '';
+  document.getElementById('newFishSpecies').value = '';
+  openModal('addFishModal');
+}
+
+function addFish() {
+  const tankId = document.getElementById('newFishTank').value;
+  const name = document.getElementById('newFishName').value.trim();
+  const species = document.getElementById('newFishSpecies').value.trim();
+  
+  if (!name) {
+    showToast('请输入鱼名', 'error');
+    return;
+  }
+  
+  Storage.addFish({ tankId, name, species });
+  closeModal('addFishModal');
+  
+  if (App.currentTank) {
+    renderTankDetail();
+  } else {
+    renderTanksPage();
+  }
+  showToast('鱼已添加');
+}
+
+function showFishDetail(fishId) {
+  const fish = Storage.getFishById(fishId);
+  if (!fish) return;
+  
+  const tank = Storage.getTank(fish.tankId);
+  const records = Storage.getRecordsByFish(fishId).slice(0, 10);
+  
+  document.getElementById('fishDetailName').textContent = fish.name;
+  document.getElementById('fishDetailTank').textContent = tank ? tank.name : '未知缸';
+  document.getElementById('fishDetailSpecies').textContent = fish.species || '未分类';
+  
+  const recordsList = document.getElementById('fishDetailRecords');
+  if (records.length === 0) {
+    recordsList.innerHTML = '<div class="empty-desc" style="text-align: center; padding: 20px;">暂无喂食记录</div>';
+  } else {
+    recordsList.innerHTML = records.map(r => `
+      <div class="list-item">
+        <div class="list-item-content">
+          <div class="list-item-title">喂食 ${r.amount}克</div>
+          <div class="list-item-meta">${formatDate(r.createdAt)}</div>
+        </div>
+      </div>
+    `).join('');
+  }
+  
+  openModal('fishDetailModal');
+}
+
+// ============ 快速操作 ============
+
+// 填充鱼缸下拉选项
+function populateTankSelect(selectId) {
+  const select = document.getElementById(selectId);
+  if (!select) return;
+  const tanks = Storage.getTanks();
+  select.innerHTML = tanks.map(t => 
+    `<option value="${t.id}">${t.name}</option>`
+  ).join('');
+}
+
+function showWaterChangeModal() {
+  if (!App.currentTank) return;
+  
+  populateTankSelect('waterTank');
+  document.getElementById('waterTank').value = App.currentTank.id;
+  document.getElementById('waterAmount').value = 33;
+  updateWaterAmountDisplay(33);
+  // 默认当前时间
+  document.getElementById('waterTime').value = toLocalDatetimeString(new Date());
+  openModal('waterChangeModal');
+}
+
+function updateWaterAmountDisplay(value) {
+  const display = document.getElementById('waterAmountDisplay');
+  const text = document.getElementById('waterAmountText');
+  if (display) display.textContent = value + '%';
+  if (text) text.textContent = value === 50 ? '二分之一' : 
+                                value === 33 ? '三分之一' : 
+                                value === 25 ? '四分之一' : 
+                                value === 100 ? '全部换水' : `${value}%`;
+}
+
+function saveWaterChange() {
+  const tankId = document.getElementById('waterTank').value;
+  const amount = parseInt(document.getElementById('waterAmount').value);
+  const notes = document.getElementById('waterNotes').value.trim();
+  const timeValue = document.getElementById('waterTime').value;
+  const createdAt = timeValue ? new Date(timeValue).toISOString() : new Date().toISOString();
+  
+  if (!tankId) {
+    showToast('请选择鱼缸', 'error');
+    return;
+  }
+  
+  Storage.addWaterChangeRecord({ tankId, amount, notes, createdAt });
+  closeModal('waterChangeModal');
+  
+  if (App.currentTank && App.currentTank.id === tankId) {
+    renderTankDetail();
+  }
+  
+  showToast(`已记录换水${amount}%`);
+}
+
+function showFeedingModal() {
+  if (!App.currentTank) return;
+  
+  const tankId = App.currentTank.id;
+  const fish = Storage.getFishByTank(tankId);
+  
+  populateTankSelect('feedingTank');
+  document.getElementById('feedingTank').value = tankId;
+  
+  const fishSelect = document.getElementById('feedingFishSelect');
+  if (fish.length === 0) {
+    fishSelect.innerHTML = '<div class="empty-desc">该缸暂无鱼</div>';
+  } else {
+    fishSelect.innerHTML = fish.map(f => `
+      <div class="checkbox-item">
+        <input type="checkbox" id="fish_${f.id}" value="${f.id}" checked onchange="updateFeedingDetails()">
+        <div class="checkbox-item-content">
+          <div class="checkbox-item-name">${f.name}</div>
+        </div>
+        <input type="number" class="checkbox-item-input" id="amount_${f.id}" value="1" min="0" max="100" placeholder="克">
+      </div>
+    `).join('');
+  }
+  
+  document.getElementById('feedingMode').value = 'batch';
+  document.getElementById('batchAmount').value = fish.length;
+  // 默认当前时间
+  document.getElementById('feedingTime').value = toLocalDatetimeString(new Date());
+  updateFeedingMode();
+  openModal('feedingModal');
+}
+
+function updateFeedingMode() {
+  const mode = document.getElementById('feedingMode').value;
+  document.getElementById('batchSection').style.display = mode === 'batch' ? 'block' : 'none';
+  document.getElementById('detailSection').style.display = mode === 'detail' ? 'block' : 'none';
+}
+
+function updateFeedingDetails() {
+  // 动态更新
+}
+
+function saveFeeding() {
+  const tankId = document.getElementById('feedingTank').value;
+  const mode = document.getElementById('feedingMode').value;
+  const timeValue = document.getElementById('feedingTime').value;
+  const createdAt = timeValue ? new Date(timeValue).toISOString() : new Date().toISOString();
+  
+  if (!tankId) {
+    showToast('请选择鱼缸', 'error');
+    return;
+  }
+  
+  if (mode === 'batch') {
+    const amount = parseInt(document.getElementById('batchAmount').value) || 1;
+    Storage.addFeedingBatchRecord({ tankId, totalAmount: amount, createdAt });
+  } else {
+    const fish = Storage.getFishByTank(tankId);
+    const feedings = [];
+    fish.forEach(f => {
+      const checkbox = document.getElementById(`fish_${f.id}`);
+      const amountInput = document.getElementById(`amount_${f.id}`);
+      if (checkbox && checkbox.checked && amountInput) {
+        feedings.push({
+          fishId: f.id,
+          amount: parseFloat(amountInput.value) || 1
+        });
+      }
+    });
+    
+    if (feedings.length === 0) {
+      showToast('请至少选择一条鱼', 'error');
+      return;
+    }
+    
+    Storage.addFeedingDetailRecord({ tankId, feedings, createdAt });
+  }
+  
+  closeModal('feedingModal');
+  
+  if (App.currentTank && App.currentTank.id === tankId) {
+    renderTankDetail();
+  }
+  
+  showToast('已记录喂食');
+}
+
+function showFilterCleanModal() {
+  if (!App.currentTank) return;
+  
+  populateTankSelect('filterTank');
+  document.getElementById('filterTank').value = App.currentTank.id;
+  document.getElementById('filterNotes').value = '';
+  // 默认当前时间
+  document.getElementById('filterTime').value = toLocalDatetimeString(new Date());
+  openModal('filterCleanModal');
+}
+
+function saveFilterClean() {
+  const tankId = document.getElementById('filterTank').value;
+  const notes = document.getElementById('filterNotes').value.trim();
+  const timeValue = document.getElementById('filterTime').value;
+  const createdAt = timeValue ? new Date(timeValue).toISOString() : new Date().toISOString();
+  
+  if (!tankId) {
+    showToast('请选择鱼缸', 'error');
+    return;
+  }
+  
+  Storage.addFilterCleanRecord({ tankId, notes, createdAt });
+  closeModal('filterCleanModal');
+  
+  if (App.currentTank && App.currentTank.id === tankId) {
+    renderTankDetail();
+  }
+  
+  showToast('已记录滤棉清洗');
+}
+
+// ============ 用药记录 ============
+
+function showMedicineModal() {
+  if (!App.currentTank) return;
+  
+  populateTankSelect('medicineTank');
+  document.getElementById('medicineTank').value = App.currentTank.id;
+  document.getElementById('medicineName').value = '';
+  document.getElementById('medicineDosage').value = '';
+  document.getElementById('medicineStartDate').value = toLocalDatetimeString(new Date());
+  document.getElementById('medicineDuration').value = '';
+  document.getElementById('medicineNotes').value = '';
+  openModal('medicineModal');
+}
+
+function saveMedicine() {
+  const tankId = document.getElementById('medicineTank').value;
+  const medicineName = document.getElementById('medicineName').value.trim();
+  const dosage = document.getElementById('medicineDosage').value.trim();
+  const startDateValue = document.getElementById('medicineStartDate').value;
+  const duration = parseInt(document.getElementById('medicineDuration').value) || null;
+  const notes = document.getElementById('medicineNotes').value.trim();
+  
+  if (!tankId) {
+    showToast('请选择鱼缸', 'error');
+    return;
+  }
+  
+  if (!medicineName) {
+    showToast('请输入药物名称', 'error');
+    return;
+  }
+  
+  if (!dosage) {
+    showToast('请输入用量', 'error');
+    return;
+  }
+  
+  const createdAt = startDateValue ? new Date(startDateValue).toISOString() : new Date().toISOString();
+  
+  Storage.addMedicineRecord({
+    tankId,
+    medicineName,
+    dosage,
+    startDate: createdAt,
+    duration,
+    notes,
+    createdAt
+  });
+  
+  closeModal('medicineModal');
+  
+  if (App.currentTank && App.currentTank.id === tankId) {
+    renderTankDetail();
+  }
+  
+  showToast(`已记录用药：${medicineName}`);
+}
+
+// 批量用药
+function batchMedicine() {
+  if (App.selectedTanks.size === 0) {
+    showToast('请先选择鱼缸', 'error');
+    return;
+  }
+  
+  const tanks = Storage.getTanks();
+  const selectedTanksList = tanks.filter(t => App.selectedTanks.has(t.id));
+  
+  document.getElementById('batchMedicineTanks').innerHTML = selectedTanksList.map(t => `<div style="margin-bottom: 4px;">${t.name}</div>`).join('');
+  document.getElementById('batchMedicineName').value = '';
+  document.getElementById('batchMedicineDosage').value = '';
+  document.getElementById('batchMedicineDuration').value = '';
+  
+  openModal('batchMedicineModal');
+}
+
+function confirmBatchMedicine() {
+  const medicineName = document.getElementById('batchMedicineName').value.trim();
+  const dosage = document.getElementById('batchMedicineDosage').value.trim();
+  const duration = parseInt(document.getElementById('batchMedicineDuration').value) || null;
+  
+  if (!medicineName) {
+    showToast('请输入药物名称', 'error');
+    return;
+  }
+  
+  if (!dosage) {
+    showToast('请输入用量', 'error');
+    return;
+  }
+  
+  const count = App.selectedTanks.size;
+  const createdAt = new Date().toISOString();
+  
+  App.selectedTanks.forEach(tankId => {
+    Storage.addMedicineRecord({
+      tankId,
+      medicineName,
+      dosage,
+      startDate: createdAt,
+      duration,
+      notes: '',
+      createdAt
+    });
+  });
+  
+  closeModal('batchMedicineModal');
+  showToast(`已批量记录 ${count} 个鱼缸用药：${medicineName}`);
+  
+  // 退出批量模式并刷新
+  exitBatchMode();
+}
+
+// ============ 语音录入 ============
+
+function showVoiceModal() {
+  const voiceStatus = document.getElementById('voiceStatus');
+  const voiceResult = document.getElementById('voiceResult');
+  
+  if (voiceStatus) voiceStatus.textContent = '点击麦克风开始说话';
+  if (voiceResult) voiceResult.textContent = '';
+  
+  if (!App.speechSupported) {
+    if (voiceStatus) voiceStatus.textContent = '当前浏览器不支持语音识别';
+    showToast('请使用 Chrome 或 Edge 浏览器', 'error');
+    return;
+  }
+  
+  openModal('voiceModal');
+}
+
+function toggleVoiceInput() {
+  if (Speech.isListening) {
+    Speech.stop();
+  } else {
+    const voiceResult = document.getElementById('voiceResult');
+    if (voiceResult) voiceResult.textContent = '';
+    Speech.start();
+  }
+}
+
+function createRecordFromSpeech(parseResult) {
+  // 批量模式处理
+  if (parseResult.isBatch && parseResult.tankIds.length > 0) {
+    const count = parseResult.tankIds.length;
+    const actionText = parseResult.action === 'water_change' ? '换水' : 
+                       parseResult.action === 'feeding' ? '喂食' : 
+                       parseResult.action === 'filter_clean' ? '滤棉清洗' : '用药';
+    
+    parseResult.tankIds.forEach(tankId => {
+      switch (parseResult.action) {
+        case 'water_change':
+          Storage.addWaterChangeRecord({
+            tankId: tankId,
+            amount: parseResult.amount
+          });
+          break;
+        case 'feeding':
+          Storage.addFeedingBatchRecord({
+            tankId: tankId,
+            totalAmount: parseResult.amount
+          });
+          break;
+        case 'filter_clean':
+          Storage.addFilterCleanRecord({
+            tankId: tankId
+          });
+          break;
+        case 'medicine':
+          Storage.addMedicineRecord({
+            tankId: tankId,
+            medicineName: parseResult.medicineName || '药物',
+            dosage: parseResult.dosage || '',
+            createdAt: new Date().toISOString()
+          });
+          break;
+      }
+    });
+    
+    showToast(`已批量记录 ${count} 个鱼缸${actionText}`);
+  } else {
+    // 单缸模式处理
+    switch (parseResult.action) {
+      case 'water_change':
+        Storage.addWaterChangeRecord({
+          tankId: parseResult.tankId,
+          amount: parseResult.amount
+        });
+        showToast(`已记录${parseResult.tankName}换水${parseResult.amount}%`);
+        break;
+      case 'feeding':
+        Storage.addFeedingBatchRecord({
+          tankId: parseResult.tankId,
+          totalAmount: parseResult.amount
+        });
+        showToast(`已记录${parseResult.tankName}喂食${parseResult.amount}克`);
+        break;
+      case 'filter_clean':
+        Storage.addFilterCleanRecord({
+          tankId: parseResult.tankId
+        });
+        showToast(`已记录${parseResult.tankName}滤棉清洗`);
+        break;
+      case 'medicine':
+        Storage.addMedicineRecord({
+          tankId: parseResult.tankId,
+          medicineName: parseResult.medicineName || '药物',
+          dosage: parseResult.dosage || '',
+          createdAt: new Date().toISOString()
+        });
+        const medicineInfo = parseResult.medicineName ? `${parseResult.medicineName}` : '药物';
+        showToast(`已记录${parseResult.tankName}用药：${medicineInfo}`);
+        break;
+    }
+  }
+  
+  // 刷新当前页面
+  if (App.currentPage === 'tanks') {
+    renderTanksPage();
+  } else if (App.currentPage === 'records') {
+    renderRecordsPage();
+  }
+}
+
+// ============ 删除记录 ============
+
+function deleteRecord(id) {
+  if (confirm('确定要删除这条记录吗？')) {
+    Storage.deleteRecord(id);
+    
+    if (App.currentTank) {
+      renderTankDetail();
+    }
+    
+    showToast('记录已删除');
+  }
+}
+
+// ============ 批量操作 ============
+
+// 进入批量操作模式
+function enterBatchMode() {
+  App.batchMode = true;
+  App.selectedTanks.clear();
+  document.getElementById('batchActionBar').classList.add('show');
+  renderTanksPage();
+}
+
+// 退出批量操作模式
+function exitBatchMode() {
+  App.batchMode = false;
+  App.selectedTanks.clear();
+  document.body.classList.remove('batch-mode');
+  document.getElementById('batchActionBar').classList.remove('show');
+  renderTanksPage();
+}
+
+// 切换鱼缸选择状态
+function toggleTankSelection(tankId) {
+  if (App.selectedTanks.has(tankId)) {
+    App.selectedTanks.delete(tankId);
+  } else {
+    App.selectedTanks.add(tankId);
+  }
+  renderTanksPage();
+}
+
+// 切换全选/取消全选
+function toggleSelectAll() {
+  const tanks = Storage.getTanks();
+  if (App.selectedTanks.size === tanks.length) {
+    App.selectedTanks.clear();
+  } else {
+    tanks.forEach(tank => App.selectedTanks.add(tank.id));
+  }
+  renderTanksPage();
+}
+
+// 更新批量操作栏
+function updateBatchActionBar() {
+  const count = App.selectedTanks.size;
+  document.getElementById('batchSelectedCount').textContent = `已选 ${count} 个`;
+}
+
+// 批量换水
+function batchWaterChange() {
+  if (App.selectedTanks.size === 0) {
+    showToast('请先选择鱼缸', 'error');
+    return;
+  }
+  
+  const tanks = Storage.getTanks();
+  const selectedTanksList = tanks.filter(t => App.selectedTanks.has(t.id));
+  
+  document.getElementById('batchWaterTanks').innerHTML = selectedTanksList.map(t => `<div style="margin-bottom: 4px;">${t.name}</div>`).join('');
+  document.getElementById('batchWaterAmount').value = 33;
+  updateBatchWaterAmountDisplay(33);
+  
+  openModal('batchWaterModal');
+}
+
+function updateBatchWaterAmountDisplay(value) {
+  document.getElementById('batchWaterAmountDisplay').textContent = value + '%';
+  const textMap = { '50': '二分之一', '33': '三分之一', '25': '四分之一', '100': '全部换水' };
+  document.getElementById('batchWaterAmountText').textContent = textMap[value] || `${value}%`;
+}
+
+function confirmBatchWater() {
+  const amount = parseInt(document.getElementById('batchWaterAmount').value);
+  const count = App.selectedTanks.size;
+  
+  App.selectedTanks.forEach(tankId => {
+    Storage.addWaterChangeRecord({ tankId, amount });
+  });
+  
+  closeModal('batchWaterModal');
+  showToast(`已批量记录 ${count} 个鱼缸换水 ${amount}%`);
+  
+  // 退出批量模式并刷新
+  exitBatchMode();
+}
+
+// 批量喂食
+function batchFeeding() {
+  if (App.selectedTanks.size === 0) {
+    showToast('请先选择鱼缸', 'error');
+    return;
+  }
+  
+  const count = App.selectedTanks.size;
+  
+  App.selectedTanks.forEach(tankId => {
+    Storage.addFeedingBatchRecord({ tankId, totalAmount: 1 });
+  });
+  
+  showToast(`已批量记录 ${count} 个鱼缸喂食`);
+  exitBatchMode();
+}
+
+// 批量滤棉清洗
+function batchFilterClean() {
+  if (App.selectedTanks.size === 0) {
+    showToast('请先选择鱼缸', 'error');
+    return;
+  }
+  
+  const count = App.selectedTanks.size;
+  
+  App.selectedTanks.forEach(tankId => {
+    Storage.addFilterCleanRecord({ tankId });
+  });
+  
+  showToast(`已批量记录 ${count} 个鱼缸滤棉清洗`);
+  exitBatchMode();
+}
+
+// ============ 工具函数 ============
+
+function formatDate(isoString) {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+  
+  if (days === 0) {
+    return '今天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  } else if (days === 1) {
+    return '昨天 ' + date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  } else if (days < 7) {
+    return `${days}天前`;
+  } else {
+    return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  }
+}
+
+function formatDateGroup(isoString) {
+  const date = new Date(isoString);
+  const now = new Date();
+  const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const yesterday = new Date(today.getTime() - 24 * 60 * 60 * 1000);
+  const recordDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  
+  if (recordDate.getTime() === today.getTime()) {
+    return '今天';
+  } else if (recordDate.getTime() === yesterday.getTime()) {
+    return '昨天';
+  } else if (now.getTime() - date.getTime() < 7 * 24 * 60 * 60 * 1000) {
+    return date.toLocaleDateString('zh-CN', { weekday: 'long' });
+  } else {
+    return date.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' });
+  }
+}
+
+function formatTime(isoString) {
+  return new Date(isoString).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+}
+
+function formatDateForFile(date) {
+  return date.toLocaleDateString('zh-CN').replace(/\//g, '-');
+}
+
+// 将 Date 对象转为 datetime-local 输入框需要的格式 (YYYY-MM-DDTHH:mm)
+function toLocalDatetimeString(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  const h = String(date.getHours()).padStart(2, '0');
+  const min = String(date.getMinutes()).padStart(2, '0');
+  return `${y}-${m}-${d}T${h}:${min}`;
+}
+
+function showToast(message, type = 'success') {
+  const toast = document.getElementById('toast');
+  toast.textContent = message;
+  toast.className = `toast ${type}`;
+  toast.classList.add('show');
+  
+  setTimeout(() => {
+    toast.classList.remove('show');
+  }, 2500);
+}
+
+// ============ 全局事件绑定 ============
+
+function bindGlobalEvents() {
+  // ESC 关闭模态框
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.show').forEach(modal => {
+        modal.classList.remove('show');
+      });
+      document.body.style.overflow = '';
+    }
+  });
+  
+  // 点击背景关闭模态框
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) {
+        overlay.classList.remove('show');
+        document.body.style.overflow = '';
+      }
+    });
+  });
+  
+  // Service Worker 消息
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.addEventListener('message', (event) => {
+      if (event.data && event.data.type === 'CHECK_REMINDERS') {
+        NotificationManager.checkAndNotify();
+      }
+    });
+  }
+}
+
+  </script>
+
+</body>
+</html>

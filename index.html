@@ -1549,27 +1549,27 @@ input[type="number"]::-webkit-inner-spin-button {
 
     <!-- 底部导航 -->
     <nav class="bottom-nav">
-      <div class="nav-item active" data-page="tanks">
+      <div class="nav-item active" data-page="tanks" onclick="showPage('tanks')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="2" y="7" width="20" height="14" rx="2"/>
           <path d="M16 7V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v2"/>
         </svg>
         <span>鱼缸</span>
       </div>
-      <div class="nav-item" data-page="records">
+      <div class="nav-item" data-page="records" onclick="showPage('records')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
         </svg>
         <span>记录</span>
       </div>
-      <div class="nav-item" data-page="reminders">
+      <div class="nav-item" data-page="reminders" onclick="showPage('reminders')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
           <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
         </svg>
         <span>提醒</span>
       </div>
-      <div class="nav-item" data-page="settings">
+      <div class="nav-item" data-page="settings" onclick="showPage('settings')">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="12" cy="12" r="3"/>
           <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/>
@@ -3774,6 +3774,7 @@ function renderTankDetail() {
 // ============ 记录页面 ============
 
 function renderRecordsPage() {
+  try {
   const records = Storage.filterRecords({
     tankId: App.filterTankId,
     type: App.filterType
@@ -3863,6 +3864,7 @@ function renderRecordsPage() {
   }
   
   container.innerHTML = html;
+  } catch(e) { console.error('renderRecordsPage error:', e); }
 }
 
 function renderRecordFilters() {
@@ -3900,6 +3902,7 @@ function setRecordFilter(tankId, type) {
 // ============ 提醒页面 ============
 
 function renderRemindersPage() {
+  try {
   const reminders = Storage.getReminders();
   const tanks = Storage.getTanks();
   const container = document.getElementById('remindersList');
@@ -3965,6 +3968,7 @@ function renderRemindersPage() {
   }
   
   container.innerHTML = html;
+  } catch(e) { console.error('renderRemindersPage error:', e); }
 }
 
 function toggleReminder(id, enabled) {

@@ -189,6 +189,38 @@ body {
   border-top: 1px solid var(--border);
 }
 
+.card-overview {
+  display: flex;
+  gap: 0;
+  margin-top: 8px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.overview-item {
+  flex: 1;
+  text-align: center;
+  padding: 0 4px;
+}
+
+.overview-item:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.overview-label {
+  display: block;
+  font-size: 11px;
+  color: var(--text-secondary);
+  margin-bottom: 2px;
+}
+
+.overview-value {
+  display: block;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text);
+}
+
 /* 按钮 */
 .btn {
   display: inline-flex;
@@ -3646,6 +3678,10 @@ function renderTanksPage() {
     const reminders = Storage.getRemindersByTank(tank.id);
     const waterReminder = reminders.find(r => r.type === 'water_change');
     const fishCount = Storage.getFishByTank(tank.id).length;
+    const records = Storage.getRecordsByTank(tank.id);
+    const lastWater = records.filter(r => r.type === 'water_change').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    const lastFeeding = records.filter(r => r.type === 'feeding').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+    const lastFilter = records.filter(r => r.type === 'filter_clean').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
     
     let countdown = null;
     let countdownClass = 'safe';
@@ -3659,20 +3695,25 @@ function renderTanksPage() {
     html += `
       <div class="card fade-in" onclick="showTankDetail('${tank.id}')">
         <div class="card-header">
-          <div class="tank-icon">
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M2 12h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 1 2-2h2"/>
-              <path d="M2 12c0-3 2-6 4-8"/>
-              <path d="M22 12c0-3-2-6-4-8"/>
-              <path d="M6 12v4"/>
-              <path d="M18 12v4"/>
-            </svg>
-          </div>
           <div style="flex: 1;">
             <div class="card-title">${tank.name}</div>
-            <div class="card-meta">${tank.location || '未设置位置'} · ${fishCount}条鱼</div>
+            <div class="card-meta">${tank.location || ''}${tank.location ? ' · ' : ''}${fishCount}条鱼</div>
           </div>
           ${countdown ? `<span class="countdown-badge ${countdownClass}">${countdown.text}</span>` : ''}
+        </div>
+        <div class="card-overview">
+          <div class="overview-item">
+            <span class="overview-label">💧换水</span>
+            <span class="overview-value">${lastWater ? formatShortDate(lastWater.createdAt) : '-'}</span>
+          </div>
+          <div class="overview-item">
+            <span class="overview-label">🍚喂食</span>
+            <span class="overview-value">${lastFeeding ? formatShortDate(lastFeeding.createdAt) : '-'}</span>
+          </div>
+          <div class="overview-item">
+            <span class="overview-label">🧹滤棉</span>
+            <span class="overview-value">${lastFilter ? formatShortDate(lastFilter.createdAt) : '-'}</span>
+          </div>
         </div>
       </div>
     `;
@@ -4995,6 +5036,24 @@ function formatDate(isoString) {
     return `${days}天前`;
   } else {
     return date.toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' });
+  }
+}
+
+function formatShortDate(isoString) {
+  const date = new Date(isoString);
+  const now = new Date();
+  const diff = now.getTime() - date.getTime();
+  const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+  const hours = date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
+  
+  if (days === 0) {
+    return hours;
+  } else if (days === 1) {
+    return '昨天';
+  } else if (days < 7) {
+    return `${days}天前`;
+  } else {
+    return `${date.getMonth() + 1}/${date.getDate()}`;
   }
 }
 

@@ -1413,14 +1413,14 @@ input[type="number"]::-webkit-inner-spin-button {
 
     <!-- 提醒页面 -->
     <div id="page-reminders" class="page">
-      <div class="page-header">
-        <h1 class="page-title">提醒</h1>
-        <p class="page-subtitle">管理各缸的换水和滤棉提醒</p>
+      <div class="page-header" style="display: flex; align-items: flex-start; justify-content: space-between;">
+        <div>
+          <h1 class="page-title">提醒</h1>
+          <p class="page-subtitle">管理各缸的换水和滤棉提醒</p>
+        </div>
+        <button class="btn btn-primary btn-sm" onclick="showAddReminderModal()" style="margin-top: 4px; flex-shrink: 0;">添加</button>
       </div>
       <div id="remindersList" class="page-content"></div>
-      <div style="padding: 16px 20px;">
-        <button class="btn btn-primary btn-block" onclick="showAddReminderModal()">添加提醒</button>
-      </div>
     </div>
 
     <!-- 设置页面 -->
@@ -1603,6 +1603,10 @@ input[type="number"]::-webkit-inner-spin-button {
           <div class="tank-stat-label">换水</div>
         </div>
         <div class="tank-stat">
+          <div class="tank-stat-value" id="tankFeedingCount">0</div>
+          <div class="tank-stat-label">喂食</div>
+        </div>
+        <div class="tank-stat">
           <div class="tank-stat-value" id="tankFilterCount">0</div>
           <div class="tank-stat-label">洗滤棉</div>
         </div>
@@ -1663,6 +1667,14 @@ input[type="number"]::-webkit-inner-spin-button {
         <span class="tank-section-title">换水记录</span>
       </div>
       <div id="tankWaterList"></div>
+    </div>
+
+    <!-- 喂食记录 -->
+    <div class="tank-section">
+      <div class="tank-section-header">
+        <span class="tank-section-title">喂食记录</span>
+      </div>
+      <div id="tankFeedingList"></div>
     </div>
 
     <!-- 滤棉清洗记录 -->
@@ -3710,11 +3722,13 @@ function renderTankDetail() {
   const fish = Storage.getFishByTank(tank.id);
   const records = Storage.getRecordsByTank(tank.id);
   const waterRecords = records.filter(r => r.type === 'water_change');
+  const feedingRecords = records.filter(r => r.type === 'feeding');
   const filterRecords = records.filter(r => r.type === 'filter_clean');
   const medicineRecords = records.filter(r => r.type === 'medicine');
   
   document.getElementById('tankFishCount').textContent = fish.length;
   document.getElementById('tankWaterCount').textContent = waterRecords.length;
+  document.getElementById('tankFeedingCount').textContent = feedingRecords.length;
   document.getElementById('tankFilterCount').textContent = filterRecords.length;
   
   // 鱼列表
@@ -3765,6 +3779,33 @@ function renderTankDetail() {
     `;
   } else {
     waterList.innerHTML = '<div class="list-item"><div class="list-item-content"><div class="list-item-meta">暂无记录</div></div></div>';
+  }
+  
+  // 喂食记录
+  const feedingList = document.getElementById('tankFeedingList');
+  const feedingRecordsAll = Storage.getRecords().filter(r => r.tankId === tank.id && r.type === 'feeding').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 5);
+  if (feedingRecordsAll.length > 0) {
+    feedingList.innerHTML = feedingRecordsAll.map(r => `
+      <div class="list-item">
+        <div class="list-item-icon" style="color: var(--warning, #f0ad4e);">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"/>
+            <path d="M8 14s1.5 2 4 2 4-2 4-2"/>
+          </svg>
+        </div>
+        <div class="list-item-content">
+          <div class="list-item-title">${r.mode === 'batch' ? `喂食 ${r.totalAmount || ''}克` : `喂食 ${r.amount || ''}克`}</div>
+          <div class="list-item-meta">${formatDate(r.createdAt)}</div>
+        </div>
+        <button class="delete-btn" onclick="event.stopPropagation(); deleteRecord('${r.id}')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+  } else {
+    feedingList.innerHTML = '<div class="list-item"><div class="list-item-content"><div class="list-item-meta">暂无记录</div></div></div>';
   }
   
   // 滤棉清洗记录

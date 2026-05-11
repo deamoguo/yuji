@@ -4149,6 +4149,7 @@ function editFish(id) {
   document.getElementById('editFishId').value = id;
   document.getElementById('editFishName').value = f.name;
   document.getElementById('editFishSpecies').value = f.species || '';
+  populateTankSelect('editFishTank');
   document.getElementById('editFishTank').value = f.tankId;
   closeModal('manageFishModal');
   openModal('editFishModal');

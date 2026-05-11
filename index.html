@@ -4527,7 +4527,7 @@ function saveWaterChange() {
   const amount = parseInt(document.getElementById('waterAmount').value);
   const notes = document.getElementById('waterNotes').value.trim();
   const timeValue = document.getElementById('waterTime').value;
-  const createdAt = timeValue ? new Date(timeValue).toISOString() : new Date().toISOString();
+  const createdAt = timeValue ? parseLocalDatetime(timeValue).toISOString() : new Date().toISOString();
   
   if (!tankId) {
     showToast('请选择鱼缸', 'error');
@@ -4590,7 +4590,7 @@ function saveFeeding() {
   const tankId = document.getElementById('feedingTank').value;
   const mode = document.getElementById('feedingMode').value;
   const timeValue = document.getElementById('feedingTime').value;
-  const createdAt = timeValue ? new Date(timeValue).toISOString() : new Date().toISOString();
+  const createdAt = timeValue ? parseLocalDatetime(timeValue).toISOString() : new Date().toISOString();
   
   if (!tankId) {
     showToast('请选择鱼缸', 'error');
@@ -4646,7 +4646,7 @@ function saveFilterClean() {
   const tankId = document.getElementById('filterTank').value;
   const notes = document.getElementById('filterNotes').value.trim();
   const timeValue = document.getElementById('filterTime').value;
-  const createdAt = timeValue ? new Date(timeValue).toISOString() : new Date().toISOString();
+  const createdAt = timeValue ? parseLocalDatetime(timeValue).toISOString() : new Date().toISOString();
   
   if (!tankId) {
     showToast('请选择鱼缸', 'error');
@@ -4701,7 +4701,7 @@ function saveMedicine() {
     return;
   }
   
-  const createdAt = startDateValue ? new Date(startDateValue).toISOString() : new Date().toISOString();
+  const createdAt = startDateValue ? parseLocalDatetime(startDateValue).toISOString() : new Date().toISOString();
   
   Storage.addMedicineRecord({
     tankId,
@@ -5081,6 +5081,17 @@ function formatTime(isoString) {
 
 function formatDateForFile(date) {
   return date.toLocaleDateString('zh-CN').replace(/\//g, '-');
+}
+
+// 将 datetime-local 输入框的值安全解析为 Date（强制作为本地时间）
+function parseLocalDatetime(datetimeLocalValue) {
+  if (!datetimeLocalValue) return new Date();
+  // datetime-local 格式: "2026-05-12T07:30"
+  // 手动解析避免浏览器时区不一致问题
+  const [datePart, timePart] = datetimeLocalValue.split('T');
+  const [y, m, d] = datePart.split('-').map(Number);
+  const [h, min] = timePart.split(':').map(Number);
+  return new Date(y, m - 1, d, h, min);
 }
 
 // 将 Date 对象转为 datetime-local 输入框需要的格式 (YYYY-MM-DDTHH:mm)

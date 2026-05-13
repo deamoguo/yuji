@@ -7,9 +7,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🧒</text></svg>">
-  <meta name="description" content="童病记 - 儿童生病治疗记录工具，记录就诊、症状、检查、用药、疫苗">
+  <meta name="description" content="童病记 - 以病程为核心的儿童健康记录工具">
   <title>童病记</title>
-  <style>
+<style>
 :root {
   --primary: #e8654a;
   --primary-light: #f0846e;
@@ -22,13 +22,18 @@
   --text-secondary: #6c757d;
   --text-light: #adb5bd;
   --danger: #dc3545;
-  --warning: #ffc107;
   --success: #28a745;
-  --info: #17a2b8;
   --shadow: 0 2px 8px rgba(0,0,0,0.08);
   --radius: 12px;
   --radius-sm: 8px;
   --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --color-symptom: #f59e0b;
+  --color-temp-hot: #ef4444;
+  --color-temp-normal: #10b981;
+  --color-visit: #3b82f6;
+  --color-checkup: #8b5cf6;
+  --color-med: #10b981;
+  --color-recovered: #10b981;
 }
 
 * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
@@ -66,41 +71,25 @@ body {
 .nav-item svg { width:24px; height:24px; margin-bottom:4px; }
 .nav-item span { font-weight:500; }
 
-/* Card */
-.card {
+/* Illness Card */
+.illness-card {
   background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
-  padding:16px; margin:0 16px 12px; transition:transform 0.15s;
+  padding:16px; margin:0 16px 12px; cursor:pointer; transition:transform 0.15s;
 }
-.card:active { transform:scale(0.98); }
-.card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
-.card-title { font-size:17px; font-weight:600; color:var(--text); }
-.card-badge {
-  font-size:12px; padding:4px 10px; border-radius:20px;
-  background:var(--primary); color:white; font-weight:500; white-space:nowrap;
-}
-.card-badge.green { background:var(--success); }
-.card-badge.orange { background:var(--warning); color:#333; }
-.card-badge.blue { background:var(--info); }
-.card-badge.gray { background:var(--text-light); }
-.card-meta { font-size:13px; color:var(--text-secondary); display:flex; align-items:center; gap:4px; flex-wrap:wrap; }
-.card-actions { display:flex; gap:8px; margin-top:12px; padding-top:12px; border-top:1px solid var(--border); }
+.illness-card:active { transform:scale(0.98); }
+.illness-card.recovered { opacity:0.65; }
+.illness-card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:8px; }
+.illness-card-title { font-size:17px; font-weight:600; color:var(--text); flex:1; margin-right:8px; }
+.illness-card-dates { font-size:13px; color:var(--text-secondary); margin-bottom:6px; }
+.illness-card-summary { font-size:13px; color:var(--text-secondary); display:flex; gap:12px; flex-wrap:wrap; }
 
-/* Button */
-.btn {
-  display:inline-flex; align-items:center; justify-content:center; gap:6px;
-  padding:12px 20px; border-radius:var(--radius-sm); font-size:15px; font-weight:600;
-  border:none; cursor:pointer; transition:all 0.15s; text-decoration:none; min-height:48px;
+.status-tag {
+  font-size:12px; padding:3px 10px; border-radius:20px; font-weight:500; white-space:nowrap;
 }
-.btn-primary { background:var(--primary); color:white; }
-.btn-primary:hover { background:var(--primary-dark); }
-.btn-primary:active { transform:scale(0.97); }
-.btn-secondary { background:var(--bg-secondary); color:var(--text); border:1px solid var(--border); }
-.btn-ghost { background:transparent; color:var(--primary); padding:8px 12px; min-height:auto; }
-.btn-danger { background:var(--danger); color:white; }
-.btn-block { width:100%; }
-.btn-sm { padding:8px 14px; font-size:13px; min-height:36px; }
+.status-tag.ongoing { background:rgba(232,101,74,0.12); color:var(--primary); }
+.status-tag.recovered { background:rgba(40,167,69,0.1); color:var(--success); }
 
-/* Floating Action Button */
+/* FAB */
 .fab {
   position:fixed; bottom:calc(80px + var(--safe-bottom)); right:20px;
   width:56px; height:56px; border-radius:50%; background:var(--primary);
@@ -110,6 +99,130 @@ body {
 }
 .fab:active { transform:scale(0.92); }
 .fab svg { width:28px; height:28px; }
+
+/* Search */
+.search-bar {
+  display:flex; align-items:center; gap:10px; padding:0 16px 16px;
+}
+.search-input-wrap {
+  flex:1; position:relative; display:flex; align-items:center;
+}
+.search-input-wrap svg { position:absolute; left:14px; color:var(--text-light); width:18px; height:18px; pointer-events:none; }
+.search-input {
+  width:100%; padding:12px 16px 12px 42px; border:1px solid var(--border);
+  border-radius:24px; font-size:15px; background:var(--bg-secondary);
+  color:var(--text); transition:border-color 0.15s;
+}
+.search-input:focus { outline:none; border-color:var(--primary); background:var(--bg); }
+.search-input::placeholder { color:var(--text-light); }
+
+.search-result-item {
+  display:flex; align-items:center; padding:12px 16px; border-radius:var(--radius-sm);
+  cursor:pointer; transition:background 0.1s; gap:12px; margin:0 16px 4px;
+}
+.search-result-item:active { background:var(--bg-secondary); }
+.search-result-icon {
+  width:36px; height:36px; border-radius:10px; display:flex;
+  align-items:center; justify-content:center; flex-shrink:0; font-size:18px;
+}
+.search-result-content { flex:1; min-width:0; }
+.search-result-title { font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.search-result-meta { font-size:12px; color:var(--text-secondary); margin-top:2px; }
+.search-highlight { background:#ffeaa7; padding:0 2px; border-radius:2px; }
+
+/* Timeline */
+.timeline-container { padding:0 16px 16px; }
+.timeline-day { margin-bottom:4px; }
+.timeline-day-header {
+  font-size:13px; font-weight:600; color:var(--text-secondary);
+  padding:8px 0 6px 24px; position:relative;
+}
+.timeline-day-header::before {
+  content:''; position:absolute; left:0; top:50%; transform:translateY(-50%);
+  width:8px; height:8px; border-radius:50%; background:var(--border);
+}
+
+.timeline-line { position:relative; padding-left:24px; }
+.timeline-line::before {
+  content:''; position:absolute; left:3px; top:0; bottom:0;
+  width:2px; background:var(--border);
+}
+
+.timeline-event {
+  position:relative; padding:8px 12px 12px 0; cursor:pointer;
+}
+.timeline-event:active { opacity:0.7; }
+.timeline-event::before {
+  content:''; position:absolute; left:-24px; top:14px;
+  width:10px; height:10px; border-radius:50%;
+  border:2px solid var(--bg); z-index:1;
+}
+.timeline-event.symptom::before { background:var(--color-symptom); }
+.timeline-event.temperature::before { background:var(--color-temp-normal); }
+.timeline-event.temperature.fever::before { background:var(--color-temp-hot); }
+.timeline-event.visit::before { background:var(--color-visit); }
+.timeline-event.checkup::before { background:var(--color-checkup); }
+.timeline-event.medication::before { background:var(--color-med); }
+.timeline-event.recovery::before { background:var(--color-recovered); }
+
+.timeline-event-icon {
+  display:inline-flex; align-items:center; gap:6px; font-size:15px; font-weight:600;
+  margin-bottom:2px;
+}
+.timeline-event-time {
+  font-size:12px; color:var(--text-light); float:right; margin-top:3px;
+}
+.timeline-event-detail { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+.timeline-event-photos { display:flex; flex-wrap:wrap; gap:6px; margin-top:6px; }
+.timeline-event-photos img {
+  width:56px; height:56px; border-radius:6px; object-fit:cover; border:1px solid var(--border);
+  cursor:pointer;
+}
+.temp-highlight { color:var(--color-temp-hot); font-weight:700; }
+.temp-normal-val { color:var(--color-temp-normal); font-weight:600; }
+
+/* Illness Detail Header */
+.detail-header {
+  padding:20px; background:var(--bg); border-bottom:1px solid var(--border);
+}
+.detail-header-top { display:flex; align-items:center; gap:12px; margin-bottom:12px; }
+.detail-back {
+  width:36px; height:36px; display:flex; align-items:center; justify-content:center;
+  border:none; background:var(--bg-secondary); color:var(--text); cursor:pointer;
+  border-radius:50%; font-size:20px; flex-shrink:0;
+}
+.detail-back:active { background:var(--border); }
+.detail-title-area { flex:1; }
+.detail-title { font-size:22px; font-weight:700; }
+.detail-meta { display:flex; align-items:center; gap:8px; margin-top:4px; font-size:14px; color:var(--text-secondary); }
+.detail-actions { display:flex; gap:8px; margin-top:12px; }
+
+/* Add Event Button */
+.add-event-bar {
+  position:sticky; bottom:0; background:var(--bg); border-top:1px solid var(--border);
+  padding:12px 16px; padding-bottom:calc(12px + var(--safe-bottom)); display:flex; gap:8px;
+}
+.add-event-btn {
+  flex:1; display:flex; align-items:center; justify-content:center; gap:6px;
+  padding:12px 8px; border-radius:var(--radius-sm); font-size:13px; font-weight:600;
+  border:1px solid var(--border); background:var(--bg); color:var(--text-secondary);
+  cursor:pointer; transition:all 0.15s;
+}
+.add-event-btn:active { background:var(--bg-secondary); border-color:var(--primary); color:var(--primary); }
+.add-event-btn .evt-icon { font-size:16px; }
+
+/* Event Type Selector */
+.event-type-grid {
+  display:grid; grid-template-columns:repeat(5,1fr); gap:12px; padding:16px;
+}
+.event-type-option {
+  display:flex; flex-direction:column; align-items:center; gap:8px;
+  padding:16px 8px; border-radius:var(--radius); background:var(--bg-secondary);
+  border:none; cursor:pointer; transition:all 0.15s;
+}
+.event-type-option:active { transform:scale(0.95); }
+.event-type-option .evt-emoji { font-size:24px; }
+.event-type-option .evt-label { font-size:13px; font-weight:500; color:var(--text); }
 
 /* Form */
 .form-group { margin-bottom:20px; }
@@ -150,7 +263,7 @@ textarea.form-input { resize:vertical; min-height:80px; }
 .photo-grid { display:flex; flex-wrap:wrap; gap:8px; margin-top:8px; }
 .photo-thumb {
   width:80px; height:80px; border-radius:var(--radius-sm); object-fit:cover;
-  border:1px solid var(--border); cursor:pointer; transition:transform 0.15s;
+  border:1px solid var(--border); cursor:pointer; transition:transform 0.15s; position:relative;
 }
 .photo-thumb:active { transform:scale(0.95); }
 .photo-add {
@@ -161,12 +274,17 @@ textarea.form-input { resize:vertical; min-height:80px; }
 }
 .photo-add:active { border-color:var(--primary); color:var(--primary); }
 .photo-add svg { width:24px; height:24px; margin-bottom:2px; }
+.photo-delete {
+  position:absolute; top:-6px; right:-6px; width:22px; height:22px;
+  border-radius:50%; background:var(--danger); color:white; border:2px solid var(--bg);
+  font-size:12px; cursor:pointer; display:flex; align-items:center; justify-content:center;
+  line-height:1; padding:0;
+}
 
 /* Photo Viewer */
 .photo-viewer {
   position:fixed; inset:0; background:rgba(0,0,0,0.95); z-index:300;
-  display:none; align-items:center; justify-content:center;
-  flex-direction:column;
+  display:none; align-items:center; justify-content:center; flex-direction:column;
 }
 .photo-viewer.show { display:flex; }
 .photo-viewer img { max-width:95%; max-height:85vh; object-fit:contain; border-radius:8px; }
@@ -199,7 +317,7 @@ textarea.form-input { resize:vertical; min-height:80px; }
 .modal-close {
   width:32px; height:32px; display:flex; align-items:center; justify-content:center;
   border:none; background:none; color:var(--text-secondary); cursor:pointer;
-  border-radius:50%; transition:background 0.1s;
+  border-radius:50%; transition:background 0.1s; font-size:20px;
 }
 .modal-close:active { background:var(--bg-secondary); }
 .modal-body { padding:20px; }
@@ -229,6 +347,21 @@ textarea.form-input { resize:vertical; min-height:80px; }
 .full-modal-title { font-size:17px; font-weight:600; flex:1; }
 .full-modal-body { flex:1; overflow-y:auto; padding:20px; -webkit-overflow-scrolling:touch; }
 
+/* Button */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:12px 20px; border-radius:var(--radius-sm); font-size:15px; font-weight:600;
+  border:none; cursor:pointer; transition:all 0.15s; text-decoration:none; min-height:48px;
+}
+.btn-primary { background:var(--primary); color:white; }
+.btn-primary:hover { background:var(--primary-dark); }
+.btn-primary:active { transform:scale(0.97); }
+.btn-secondary { background:var(--bg-secondary); color:var(--text); border:1px solid var(--border); }
+.btn-ghost { background:transparent; color:var(--primary); padding:8px 12px; min-height:auto; }
+.btn-danger { background:var(--danger); color:white; }
+.btn-block { width:100%; }
+.btn-sm { padding:8px 14px; font-size:13px; min-height:36px; }
+
 /* Empty State */
 .empty-state {
   display:flex; flex-direction:column; align-items:center;
@@ -238,167 +371,7 @@ textarea.form-input { resize:vertical; min-height:80px; }
 .empty-title { font-size:18px; font-weight:600; color:var(--text); margin-bottom:8px; }
 .empty-desc { font-size:14px; color:var(--text-secondary); margin-bottom:24px; }
 
-/* Search */
-.search-bar {
-  display:flex; align-items:center; gap:10px; padding:0 16px 16px;
-}
-.search-input-wrap {
-  flex:1; position:relative; display:flex; align-items:center;
-}
-.search-input-wrap svg { position:absolute; left:14px; color:var(--text-light); width:18px; height:18px; }
-.search-input {
-  width:100%; padding:12px 16px 12px 42px; border:1px solid var(--border);
-  border-radius:24px; font-size:15px; background:var(--bg-secondary);
-  color:var(--text); transition:border-color 0.15s;
-}
-.search-input:focus { outline:none; border-color:var(--primary); background:var(--bg); }
-.search-input::placeholder { color:var(--text-light); }
-
-.search-section { margin:0 16px 16px; }
-.search-section-title {
-  font-size:13px; font-weight:600; color:var(--text-secondary);
-  text-transform:uppercase; letter-spacing:0.5px; margin-bottom:8px; padding-left:4px;
-}
-.search-result-item {
-  display:flex; align-items:center; padding:12px; border-radius:var(--radius-sm);
-  cursor:pointer; transition:background 0.1s; gap:12px;
-}
-.search-result-item:active { background:var(--bg-secondary); }
-.search-result-icon {
-  width:36px; height:36px; border-radius:10px; display:flex;
-  align-items:center; justify-content:center; flex-shrink:0;
-}
-.search-result-icon.visit { background:rgba(232,101,74,0.1); color:var(--primary); }
-.search-result-icon.checkup { background:rgba(23,162,184,0.1); color:var(--info); }
-.search-result-icon.med { background:rgba(255,193,7,0.1); color:#e6a800; }
-.search-result-icon.vaccine { background:rgba(40,167,69,0.1); color:var(--success); }
-.search-result-icon.symptom { background:rgba(232,101,74,0.1); color:var(--primary); }
-.search-result-content { flex:1; min-width:0; }
-.search-result-title { font-size:15px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.search-result-meta { font-size:12px; color:var(--text-secondary); margin-top:2px; }
-.search-highlight { background:#ffeaa7; padding:0 2px; border-radius:2px; }
-
-.search-history { padding:0 16px; }
-.search-history-title {
-  display:flex; justify-content:space-between; align-items:center;
-  margin-bottom:12px;
-}
-.search-history-title span { font-size:14px; font-weight:600; color:var(--text-secondary); }
-.search-history-clear { font-size:13px; color:var(--primary); background:none; border:none; cursor:pointer; }
-.history-tags { display:flex; flex-wrap:wrap; gap:8px; }
-.history-tag {
-  padding:6px 14px; border-radius:20px; font-size:13px;
-  background:var(--bg-secondary); color:var(--text-secondary);
-  border:none; cursor:pointer;
-}
-.history-tag:active { background:var(--primary-bg); color:var(--primary); }
-
-/* Dashboard */
-.dash-section { margin-bottom:20px; }
-.dash-section-header {
-  display:flex; justify-content:space-between; align-items:center;
-  padding:0 16px; margin-bottom:10px;
-}
-.dash-section-title { font-size:17px; font-weight:600; }
-.dash-section-more { font-size:13px; color:var(--primary); background:none; border:none; cursor:pointer; }
-.dash-quick-actions {
-  display:grid; grid-template-columns:repeat(4,1fr); gap:12px;
-  padding:0 16px; margin-bottom:20px;
-}
-.dash-quick-btn {
-  display:flex; flex-direction:column; align-items:center; gap:6px;
-  padding:16px 8px; border-radius:var(--radius); background:var(--bg);
-  border:1px solid var(--border); cursor:pointer; transition:all 0.15s;
-}
-.dash-quick-btn:active { transform:scale(0.95); border-color:var(--primary); }
-.dash-quick-icon {
-  width:40px; height:40px; border-radius:12px; display:flex;
-  align-items:center; justify-content:center;
-}
-.dash-quick-icon.visit-icon { background:rgba(232,101,74,0.1); color:var(--primary); }
-.dash-quick-icon.symptom-icon { background:rgba(255,193,7,0.1); color:#e6a800; }
-.dash-quick-icon.med-icon { background:rgba(40,167,69,0.1); color:var(--success); }
-.dash-quick-icon.checkup-icon { background:rgba(23,162,184,0.1); color:var(--info); }
-.dash-quick-label { font-size:13px; font-weight:500; color:var(--text); }
-
-.dash-card {
-  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
-  margin:0 16px 10px; padding:14px 16px; cursor:pointer; transition:transform 0.15s;
-}
-.dash-card:active { transform:scale(0.98); }
-.dash-card-title { font-size:15px; font-weight:600; margin-bottom:4px; }
-.dash-card-meta { font-size:13px; color:var(--text-secondary); }
-.dash-card-row { display:flex; gap:8px; flex-wrap:wrap; margin-top:6px; }
-
-.tag {
-  display:inline-block; padding:3px 10px; border-radius:12px;
-  font-size:12px; font-weight:500;
-}
-.tag-primary { background:var(--primary-bg); color:var(--primary); }
-.tag-success { background:rgba(40,167,69,0.1); color:var(--success); }
-.tag-warning { background:rgba(255,193,7,0.15); color:#b8860b; }
-.tag-info { background:rgba(23,162,184,0.1); color:var(--info); }
-.tag-gray { background:var(--bg-secondary); color:var(--text-secondary); }
-
-/* Temperature chart */
-.temp-chart-container { padding:0 16px; margin-bottom:16px; }
-.temp-chart { width:100%; height:160px; border-radius:var(--radius); background:var(--bg-secondary); }
-
-/* Timeline */
-.timeline { position:relative; padding-left:28px; margin:0 16px; }
-.timeline::before {
-  content:''; position:absolute; left:8px; top:0; bottom:0;
-  width:2px; background:var(--border);
-}
-.timeline-item { position:relative; padding-bottom:20px; }
-.timeline-item::before {
-  content:''; position:absolute; left:-24px; top:4px;
-  width:12px; height:12px; border-radius:50%;
-  background:var(--primary); border:2px solid var(--bg);
-}
-.timeline-item.ended::before { background:var(--text-light); }
-.timeline-date { font-size:12px; color:var(--text-secondary); margin-bottom:4px; }
-.timeline-title { font-size:15px; font-weight:600; margin-bottom:2px; }
-.timeline-desc { font-size:13px; color:var(--text-secondary); }
-.timeline-severity { display:flex; gap:2px; }
-.timeline-severity .star { color:var(--primary); font-size:12px; }
-.timeline-severity .star.empty { color:var(--text-light); }
-
-/* Filter */
-.filter-bar {
-  display:flex; gap:8px; padding:0 16px 16px;
-  overflow-x:auto; -webkit-overflow-scrolling:touch;
-}
-.filter-chip {
-  padding:8px 16px; border-radius:20px; font-size:13px; font-weight:500;
-  white-space:nowrap; border:1px solid var(--border); background:var(--bg);
-  color:var(--text-secondary); cursor:pointer; transition:all 0.15s;
-}
-.filter-chip.active { background:var(--primary); border-color:var(--primary); color:white; }
-
-/* Checkbox list for linking */
-.link-list { border:1px solid var(--border); border-radius:var(--radius-sm); overflow:hidden; max-height:200px; overflow-y:auto; }
-.link-item {
-  display:flex; align-items:center; padding:12px 16px;
-  border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s;
-}
-.link-item:last-child { border-bottom:none; }
-.link-item:active { background:var(--bg-secondary); }
-.link-item input { width:18px; height:18px; margin-right:10px; accent-color:var(--primary); flex-shrink:0; }
-.link-item-content { flex:1; min-width:0; }
-.link-item-title { font-size:14px; font-weight:500; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.link-item-meta { font-size:12px; color:var(--text-secondary); }
-
-/* Date range filter */
-.date-filter { display:flex; gap:8px; padding:0 16px 12px; align-items:center; }
-.date-filter input[type="date"] {
-  flex:1; padding:10px 12px; border:1px solid var(--border);
-  border-radius:var(--radius-sm); font-size:14px; background:var(--bg);
-  color:var(--text);
-}
-.date-filter span { color:var(--text-light); font-size:14px; }
-
-/* Vaccine preset */
+/* Vaccine */
 .vaccine-presets { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:12px; }
 .vaccine-preset {
   padding:6px 14px; border-radius:20px; font-size:13px;
@@ -406,6 +379,26 @@ textarea.form-input { resize:vertical; min-height:80px; }
   border:1px solid var(--border); cursor:pointer; transition:all 0.15s;
 }
 .vaccine-preset:active { background:var(--primary-bg); border-color:var(--primary); color:var(--primary); }
+
+.vaccine-card {
+  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 16px; margin:0 16px 10px; cursor:pointer; transition:transform 0.15s;
+}
+.vaccine-card:active { transform:scale(0.98); }
+.vaccine-card-title { font-size:15px; font-weight:600; }
+.vaccine-card-meta { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+
+/* Config */
+.config-avatar {
+  width:80px; height:80px; border-radius:50%; background:var(--primary-bg);
+  display:flex; align-items:center; justify-content:center; margin:0 auto 16px;
+  font-size:40px;
+}
+
+/* Temp display */
+.temp-value-display { font-size:48px; font-weight:700; text-align:center; padding:20px; }
+.temp-normal { color:var(--success); }
+.temp-fever { color:var(--danger); }
 
 /* Toast */
 .toast {
@@ -416,83 +409,45 @@ textarea.form-input { resize:vertical; min-height:80px; }
 }
 .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
 
-/* Tab inside page */
-.sub-tabs { display:flex; border-bottom:1px solid var(--border); margin-bottom:16px; }
-.sub-tab {
-  flex:1; padding:12px; text-align:center; font-size:14px; font-weight:500;
-  color:var(--text-secondary); background:none; border:none; cursor:pointer;
-  border-bottom:2px solid transparent; transition:all 0.15s;
-}
-.sub-tab.active { color:var(--primary); border-bottom-color:var(--primary); }
-
-/* Temp input */
-.temp-input-row { display:flex; gap:12px; align-items:flex-end; }
-.temp-input-row .form-group { flex:1; }
-.temp-value-display {
-  font-size:48px; font-weight:700; text-align:center; padding:20px;
-}
-.temp-normal { color:var(--success); }
-.temp-fever { color:var(--danger); }
-.temp-low { color:var(--info); }
-
 /* Scrollbar */
 .page-content::-webkit-scrollbar { width:0; }
-.modal::-webkit-scrollbar { width:0; }
+.full-modal-body::-webkit-scrollbar { width:0; }
 
 /* Animations */
 @keyframes fadeIn { from { opacity:0; transform:translateY(10px); } to { opacity:1; transform:translateY(0); } }
 .fade-in { animation: fadeIn 0.3s ease-out; }
-
-/* Config modal */
-.config-avatar {
-  width:80px; height:80px; border-radius:50%; background:var(--primary-bg);
-  display:flex; align-items:center; justify-content:center; margin:0 auto 16px;
-  font-size:40px;
-}
 </style>
 </head>
 <body>
 
 <div class="app-container">
-  <!-- Pages -->
   <div id="page-home" class="page-content"></div>
-  <div id="page-visit" class="page-content" style="display:none"></div>
-  <div id="page-checkup" class="page-content" style="display:none"></div>
-  <div id="page-track" class="page-content" style="display:none"></div>
-  <div id="page-search" class="page-content" style="display:none"></div>
+  <div id="page-vaccine" class="page-content" style="display:none"></div>
 
-  <!-- Bottom Nav -->
   <nav class="bottom-nav">
     <button class="nav-item active" data-page="home">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12l9-9 9 9"/><path d="M5 10v10a1 1 0 001 1h3a1 1 0 001-1v-4h4v4a1 1 0 001 1h3a1 1 0 001-1V10"/></svg>
-      <span>首页</span>
+      <span>病程</span>
     </button>
-    <button class="nav-item" data-page="visit">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg>
-      <span>就诊</span>
-    </button>
-    <button class="nav-item" data-page="checkup">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg>
-      <span>检查</span>
-    </button>
-    <button class="nav-item" data-page="track">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>
-      <span>追踪</span>
-    </button>
-    <button class="nav-item" data-page="search">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <span>搜索</span>
+    <button class="nav-item" data-page="vaccine">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
+      <span>疫苗</span>
     </button>
   </nav>
 </div>
 
-<!-- Photo Viewer -->
-<div id="photo-viewer" class="photo-viewer" onclick="closePhotoViewer()">
-  <button class="photo-viewer-close">&times;</button>
-  <img id="photo-viewer-img" src="" alt="">
+<!-- Illness Detail Page -->
+<div id="illness-detail" class="full-modal">
+  <div class="full-modal-header">
+    <button class="full-modal-back" onclick="closeIllnessDetail()">&larr;</button>
+    <div class="full-modal-title" id="detail-title"></div>
+    <button class="btn btn-ghost btn-sm" onclick="showIllnessConfig()">编辑</button>
+  </div>
+  <div class="full-modal-body" id="detail-body"></div>
+  <div class="add-event-bar" id="add-event-bar"></div>
 </div>
 
-<!-- Full Modal (for forms) -->
+<!-- Full Modal for Forms -->
 <div id="full-modal" class="full-modal">
   <div class="full-modal-header">
     <button class="full-modal-back" onclick="closeFullModal()">&larr;</button>
@@ -502,10 +457,21 @@ textarea.form-input { resize:vertical; min-height:80px; }
   <div class="full-modal-body" id="full-modal-body"></div>
 </div>
 
+<!-- Modal Overlay for event type selector etc -->
+<div id="modal-overlay" class="modal-overlay" onclick="closeModal()">
+  <div class="modal" id="modal-content" onclick="event.stopPropagation()"></div>
+</div>
+
+<!-- Photo Viewer -->
+<div id="photo-viewer" class="photo-viewer" onclick="closePhotoViewer()">
+  <button class="photo-viewer-close">&times;</button>
+  <img id="photo-viewer-img" src="" alt="">
+</div>
+
 <!-- Toast -->
 <div id="toast" class="toast"></div>
 
-<!-- Hidden file input for photos -->
+<!-- Hidden file input -->
 <input type="file" id="photo-file-input" accept="image/*" multiple style="display:none">
 
 <script>
@@ -527,10 +493,22 @@ function formatDate(d) {
   return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}-${String(dt.getDate()).padStart(2,'0')}`;
 }
 
+function formatDateShort(d) {
+  if (!d) return '';
+  const dt = typeof d === 'string' ? parseLocalDatetime(d) : d;
+  return `${dt.getMonth()+1}.${dt.getDate()}`;
+}
+
 function formatDatetime(d) {
   if (!d) return '';
   const dt = typeof d === 'string' ? parseLocalDatetime(d) : d;
   return `${formatDate(dt)} ${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
+}
+
+function formatTime(d) {
+  if (!d) return '';
+  const dt = typeof d === 'string' ? parseLocalDatetime(d) : d;
+  return `${String(dt.getHours()).padStart(2,'0')}:${String(dt.getMinutes()).padStart(2,'0')}`;
 }
 
 function formatRelative(d) {
@@ -552,10 +530,18 @@ function showToast(msg) {
   setTimeout(() => t.classList.remove('show'), 2000);
 }
 
+function nowISO() {
+  const n = new Date();
+  return n.getFullYear()+'-'+String(n.getMonth()+1).padStart(2,'0')+'-'+String(n.getDate()).padStart(2,'0')+'T'+String(n.getHours()).padStart(2,'0')+':'+String(n.getMinutes()).padStart(2,'0');
+}
+
+function todayISO() {
+  return formatDate(new Date());
+}
+
 // ==================== IndexedDB ====================
 const DB_NAME = 'child_health_db';
-const DB_VERSION = 1;
-const STORES = ['visits','symptoms','temperatures','checkups','medications','vaccines','photos'];
+const DB_VERSION = 2;
 
 let db = null;
 
@@ -563,13 +549,36 @@ function openDB() {
   return new Promise((resolve, reject) => {
     const req = indexedDB.open(DB_NAME, DB_VERSION);
     req.onupgradeneeded = (e) => {
-      const db = e.target.result;
-      STORES.forEach(name => {
-        if (!db.objectStoreNames.contains(name)) {
-          const store = db.createObjectStore(name, { keyPath: 'id' });
-          store.createIndex('createdAt','createdAt');
+      const database = e.target.result;
+      // New stores for v2
+      const storeDefs = {
+        illnesses: { keyPath:'id', indexes:[['createdAt','createdAt'],['status','status']] },
+        events: { keyPath:'id', indexes:[['illnessId','illnessId'],['eventType','eventType'],['timestamp','timestamp'],['createdAt','createdAt']] },
+        photos: { keyPath:'id', indexes:[['eventId','eventId']] },
+        vaccines: { keyPath:'id', indexes:[['createdAt','createdAt']] }
+      };
+      for (const [name, def] of Object.entries(storeDefs)) {
+        let store;
+        if (!database.objectStoreNames.contains(name)) {
+          store = database.createObjectStore(name, { keyPath: def.keyPath });
+        } else {
+          store = e.target.transaction.objectStore(name);
         }
-      });
+        if (def.indexes) {
+          for (const [idxName, idxKey] of def.indexes) {
+            if (!store.indexNames.contains(idxName)) {
+              store.createIndex(idxName, idxKey);
+            }
+          }
+        }
+      }
+      // Keep old stores if they exist (for migration)
+      const oldStores = ['visits','symptoms','temperatures','checkups','medications'];
+      for (const name of oldStores) {
+        if (!database.objectStoreNames.contains(name)) {
+          database.createObjectStore(name, { keyPath:'id' });
+        }
+      }
     };
     req.onsuccess = (e) => { db = e.target.result; resolve(db); };
     req.onerror = (e) => reject(e.target.error);
@@ -627,12 +636,13 @@ function dbGetByIndex(storeName, indexName, value) {
   });
 }
 
-// ==================== Config (LocalStorage) ====================
+// ==================== Config ====================
 function getConfig() {
   const raw = localStorage.getItem('child_health_config');
-  return raw ? JSON.parse(raw) : { version:1, childName:'宝贝', childBirthDate:'' };
+  return raw ? JSON.parse(raw) : { version:2, childName:'宝贝', childBirthDate:'' };
 }
 function saveConfig(cfg) {
+  cfg.version = 2;
   localStorage.setItem('child_health_config', JSON.stringify(cfg));
 }
 
@@ -669,90 +679,24 @@ function compressImage(file, maxWidth, quality) {
   });
 }
 
-async function savePhoto(recordType, recordId, file) {
+async function savePhoto(eventId, file) {
   const full = await compressImage(file, 1200, 0.8);
   const thumb = await compressImage(file, 200, 0.6);
-  const photo = {
-    id: genId(), recordType, recordId,
-    data: full, thumbnail: thumb,
-    createdAt: new Date().toISOString()
-  };
+  const photo = { id: genId(), eventId, data: full, thumbnail: thumb, createdAt: new Date().toISOString() };
   await dbPut('photos', photo);
   return photo.id;
 }
 
-async function getPhotosForRecord(recordType, recordId) {
-  const all = await dbGetAll('photos');
-  return all.filter(p => p.recordType === recordType && p.recordId === recordId);
+async function getPhotosForEvent(eventId) {
+  return await dbGetByIndex('photos', 'eventId', eventId);
 }
 
-async function deletePhotosForRecord(recordType, recordId) {
-  const photos = await getPhotosForRecord(recordType, recordId);
+async function deletePhotosForEvent(eventId) {
+  const photos = await getPhotosForEvent(eventId);
   for (const p of photos) { await dbDelete('photos', p.id); }
 }
 
-let pendingPhotos = []; // photos waiting to be saved when form is submitted
-
-// ==================== Navigation ====================
-let currentPage = 'home';
-let currentSubTab = 'symptoms';
-
-function switchPage(page) {
-  currentPage = page;
-  document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
-  document.getElementById('page-' + page).style.display = '';
-  document.querySelectorAll('.nav-item').forEach(n => {
-    n.classList.toggle('active', n.dataset.page === page);
-  });
-  renderPage(page);
-}
-
-document.querySelectorAll('.nav-item').forEach(n => {
-  n.addEventListener('click', () => switchPage(n.dataset.page));
-});
-
-// ==================== Full Modal ====================
-let currentEditType = null;
-let currentEditId = null;
-
-function openFullModal(title, bodyHTML, editType, editId) {
-  currentEditType = editType;
-  currentEditId = editId;
-  document.getElementById('full-modal-title').textContent = title;
-  document.getElementById('full-modal-body').innerHTML = bodyHTML;
-  document.getElementById('full-modal-delete').style.display = editId ? '' : 'none';
-  document.getElementById('full-modal').classList.add('show');
-  pendingPhotos = [];
-}
-
-function closeFullModal() {
-  document.getElementById('full-modal').classList.remove('show');
-  currentEditType = null;
-  currentEditId = null;
-  pendingPhotos = [];
-}
-
-async function deleteCurrentRecord() {
-  if (!currentEditType || !currentEditId) return;
-  if (!confirm('确定删除此记录？')) return;
-  await dbDelete(currentEditType, currentEditId);
-  await deletePhotosForRecord(currentEditType, currentEditId);
-  closeFullModal();
-  showToast('已删除');
-  renderPage(currentPage);
-}
-
-// ==================== Photo Viewer ====================
-function viewPhoto(src) {
-  document.getElementById('photo-viewer-img').src = src;
-  document.getElementById('photo-viewer').classList.add('show');
-}
-function closePhotoViewer() {
-  document.getElementById('photo-viewer').classList.remove('show');
-}
-
-// ==================== Photo input handling ====================
-let photoInputCallback = null;
+let pendingPhotos = [];
 
 function triggerPhotoInput() {
   document.getElementById('photo-file-input').click();
@@ -768,8 +712,7 @@ document.getElementById('photo-file-input').addEventListener('change', async fun
     pendingPhotos.push({ file, thumb, full });
   }
   e.target.value = '';
-  // re-render photo previews
-  if (typeof renderPhotoPreview === 'function') renderPhotoPreview();
+  renderPhotoPreview();
 });
 
 function renderPhotoPreview() {
@@ -777,8 +720,10 @@ function renderPhotoPreview() {
   if (!container) return;
   let html = '<div class="photo-grid">';
   pendingPhotos.forEach((p, i) => {
-    html += `<img class="photo-thumb" src="${p.thumb}" onclick="viewPhoto('${p.full.replace(/'/g,"\\'")}')">
-             <button class="btn btn-ghost btn-sm" style="position:absolute;margin-top:-80px;margin-left:56px;font-size:16px;" onclick="removePendingPhoto(${i})">&times;</button>`;
+    html += `<div style="position:relative;display:inline-block">
+      <img class="photo-thumb" src="${p.thumb}" onclick="viewPhoto('${p.full.replace(/'/g,"\\'")}')">
+      <button class="photo-delete" onclick="event.stopPropagation();removePendingPhoto(${i})">&times;</button>
+    </div>`;
   });
   if (pendingPhotos.length < 10) {
     html += `<button class="photo-add" onclick="triggerPhotoInput()">
@@ -794,660 +739,796 @@ function removePendingPhoto(idx) {
   renderPhotoPreview();
 }
 
-// ==================== Rendering Pages ====================
+// ==================== Photo Viewer ====================
+function viewPhoto(src) {
+  document.getElementById('photo-viewer-img').src = src;
+  document.getElementById('photo-viewer').classList.add('show');
+}
+function closePhotoViewer() {
+  document.getElementById('photo-viewer').classList.remove('show');
+}
+
+// ==================== Navigation ====================
+let currentPage = 'home';
+let currentIllnessId = null;
+
+function switchPage(page) {
+  currentPage = page;
+  document.querySelectorAll('.page-content').forEach(p => p.style.display = 'none');
+  document.getElementById('page-' + page).style.display = '';
+  document.querySelectorAll('.nav-item').forEach(n => {
+    n.classList.toggle('active', n.dataset.page === page);
+  });
+  renderPage(page);
+}
+
+document.querySelectorAll('.nav-item').forEach(n => {
+  n.addEventListener('click', () => switchPage(n.dataset.page));
+});
+
 function renderPage(page) {
   switch(page) {
     case 'home': renderHome(); break;
-    case 'visit': renderVisits(); break;
-    case 'checkup': renderCheckups(); break;
-    case 'track': renderTrack(); break;
-    case 'search': renderSearch(); break;
+    case 'vaccine': renderVaccines(); break;
   }
 }
 
-// ==================== HOME ====================
+// ==================== Modal ====================
+function openModal(html) {
+  document.getElementById('modal-content').innerHTML = html;
+  document.getElementById('modal-overlay').classList.add('show');
+}
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('show');
+}
+
+// ==================== Full Modal ====================
+let currentEditType = null;
+let currentEditId = null;
+let currentEditIllnessId = null;
+
+function openFullModal(title, bodyHTML, editType, editId, illnessId) {
+  currentEditType = editType;
+  currentEditId = editId;
+  currentEditIllnessId = illnessId || null;
+  document.getElementById('full-modal-title').textContent = title;
+  document.getElementById('full-modal-body').innerHTML = bodyHTML;
+  document.getElementById('full-modal-delete').style.display = editId ? '' : 'none';
+  document.getElementById('full-modal').classList.add('show');
+  pendingPhotos = [];
+}
+
+function closeFullModal() {
+  document.getElementById('full-modal').classList.remove('show');
+  currentEditType = null;
+  currentEditId = null;
+  currentEditIllnessId = null;
+  pendingPhotos = [];
+}
+
+async function deleteCurrentRecord() {
+  if (!currentEditType || !currentEditId) return;
+  if (!confirm('确定删除此记录？')) return;
+
+  if (currentEditType === 'event') {
+    await dbDelete('events', currentEditId);
+    await deletePhotosForEvent(currentEditId);
+    closeFullModal();
+    showToast('已删除');
+    if (currentEditIllnessId) renderIllnessDetail(currentEditIllnessId);
+  }
+}
+
+// ==================== HOME PAGE ====================
 async function renderHome() {
   const el = document.getElementById('page-home');
   const cfg = getConfig();
-  const visits = (await dbGetAll('visits')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-  const symptoms = await dbGetAll('symptoms');
-  const meds = await dbGetAll('medications');
-  const temps = (await dbGetAll('temperatures')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-  const checkups = (await dbGetAll('checkups')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-
-  const activeSymptoms = symptoms.filter(s => !s.endDate);
-  const activeMeds = meds.filter(m => m.status === '进行中');
-  const recentVisits = visits.slice(0,3);
-  const recentCheckups = checkups.slice(0,3);
-
-  // Recent 7 days temps
-  const weekAgo = new Date(); weekAgo.setDate(weekAgo.getDate()-7);
-  const recentTemps = temps.filter(t => new Date(t.date) >= weekAgo).sort((a,b) => a.date.localeCompare(b.date));
+  const illnesses = (await dbGetAll('illnesses')).sort((a,b) => {
+    if (a.status === 'ongoing' && b.status !== 'ongoing') return -1;
+    if (a.status !== 'ongoing' && b.status === 'ongoing') return 1;
+    return b.startDate.localeCompare(a.startDate);
+  });
 
   let html = `
   <div class="page-header">
     <div class="page-title">🧒 ${cfg.childName}的健康记录</div>
     <div class="page-subtitle" style="display:flex;justify-content:space-between;align-items:center;">
-      <span>童病记 · 守护宝贝健康</span>
-      <button class="btn btn-ghost btn-sm" onclick="showConfigModal()">⚙️ 设置</button>
+      <span>童病记 · 以病程为轴</span>
+      <button class="btn btn-ghost btn-sm" onclick="showConfigModal()">⚙️</button>
     </div>
   </div>
+  <div class="search-bar">
+    <div class="search-input-wrap">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="text" class="search-input" id="home-search-input" placeholder="搜索症状、诊断、药品..." oninput="debounceHomeSearch()" onkeydown="if(event.key==='Enter')doHomeSearch()">
+    </div>
+  </div>
+  <div id="home-search-results"></div>
+  <div id="illness-list">`;
 
-  <div class="dash-quick-actions">
-    <button class="dash-quick-btn" onclick="openVisitForm()">
-      <div class="dash-quick-icon visit-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/><path d="M9 14l2 2 4-4"/></svg></div>
-      <span class="dash-quick-label">记就诊</span>
-    </button>
-    <button class="dash-quick-btn" onclick="openSymptomForm()">
-      <div class="dash-quick-icon symptom-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-      <span class="dash-quick-label">记症状</span>
-    </button>
-    <button class="dash-quick-btn" onclick="openMedForm()">
-      <div class="dash-quick-icon med-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg></div>
-      <span class="dash-quick-label">记用药</span>
-    </button>
-    <button class="dash-quick-btn" onclick="openCheckupForm()">
-      <div class="dash-quick-icon checkup-icon"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg></div>
-      <span class="dash-quick-label">记检查</span>
-    </button>
-  </div>`;
-
-  // Active symptoms
-  if (activeSymptoms.length > 0) {
-    html += `<div class="dash-section">
-      <div class="dash-section-header"><span class="dash-section-title">🤒 当前症状</span></div>`;
-    activeSymptoms.forEach(s => {
-      const stars = '★'.repeat(s.severity) + '☆'.repeat(5-s.severity);
-      html += `<div class="dash-card" onclick="openSymptomForm('${s.id}')">
-        <div class="dash-card-title">${s.name}</div>
-        <div class="dash-card-meta">${formatRelative(s.startDate)} · <span style="color:var(--primary)">${stars}</span></div>
-        ${s.notes ? `<div class="dash-card-meta">${s.notes}</div>` : ''}
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  // Active medications
-  if (activeMeds.length > 0) {
-    html += `<div class="dash-section">
-      <div class="dash-section-header"><span class="dash-section-title">💊 用药中</span></div>`;
-    activeMeds.forEach(m => {
-      html += `<div class="dash-card" onclick="openMedForm('${m.id}')">
-        <div class="dash-card-title">${m.name}</div>
-        <div class="dash-card-meta">${m.dosage} · ${m.frequency}</div>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  // Temperature chart (recent 7 days)
-  if (recentTemps.length > 0) {
-    html += `<div class="dash-section">
-      <div class="dash-section-header"><span class="dash-section-title">🌡️ 体温曲线（近7天）</span></div>
-      <div class="temp-chart-container"><canvas id="temp-chart-home" class="temp-chart"></canvas></div>
-    </div>`;
-  }
-
-  // Recent visits
-  if (recentVisits.length > 0) {
-    html += `<div class="dash-section">
-      <div class="dash-section-header">
-        <span class="dash-section-title">🏥 近期就诊</span>
-        <button class="dash-section-more" onclick="switchPage('visit')">全部</button>
-      </div>`;
-    recentVisits.forEach(v => {
-      html += `<div class="dash-card" onclick="openVisitForm('${v.id}')">
-        <div class="dash-card-title">${v.diagnosis || '就诊记录'}</div>
-        <div class="dash-card-meta">${formatRelative(v.date)} · ${v.hospital||''} ${v.department||''}</div>
-        ${v.symptoms && v.symptoms.length ? `<div class="dash-card-row">${v.symptoms.map(s=>`<span class="tag tag-primary">${s}</span>`).join('')}</div>` : ''}
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  // Recent checkups
-  if (recentCheckups.length > 0) {
-    html += `<div class="dash-section">
-      <div class="dash-section-header">
-        <span class="dash-section-title">📋 近期检查</span>
-        <button class="dash-section-more" onclick="switchPage('checkup')">全部</button>
-      </div>`;
-    recentCheckups.forEach(c => {
-      html += `<div class="dash-card" onclick="openCheckupForm('${c.id}')">
-        <div class="dash-card-title">${c.type}</div>
-        <div class="dash-card-meta">${formatRelative(c.date)} · ${c.hospital||''}</div>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  if (!visits.length && !symptoms.length && !checkups.length) {
+  if (illnesses.length === 0) {
     html += `<div class="empty-state">
       <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M8 14s1.5 2 4 2 4-2 4-2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg></div>
-      <div class="empty-title">还没有记录</div>
-      <div class="empty-desc">点击上方按钮开始记录宝贝的健康状况</div>
-    </div>`;
-  }
-
-  el.innerHTML = html;
-
-  // Draw temp chart if data
-  if (recentTemps.length > 1) {
-    setTimeout(() => drawTempChart('temp-chart-home', recentTemps), 50);
-  }
-}
-
-// ==================== Temperature Chart ====================
-function drawTempChart(canvasId, temps) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext('2d');
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = rect.width * dpr;
-  canvas.height = rect.height * dpr;
-  ctx.scale(dpr, dpr);
-  const W = rect.width, H = rect.height;
-  const pad = { top:20, right:16, bottom:30, left:40 };
-  const cw = W - pad.left - pad.right;
-  const ch = H - pad.top - pad.bottom;
-
-  // Find range
-  const vals = temps.map(t => t.value);
-  const minV = Math.min(35, Math.min(...vals) - 0.5);
-  const maxV = Math.max(39.5, Math.max(...vals) + 0.5);
-
-  function xPos(i) { return pad.left + (temps.length > 1 ? i / (temps.length-1) * cw : cw/2); }
-  function yPos(v) { return pad.top + (1 - (v - minV) / (maxV - minV)) * ch; }
-
-  // Background
-  ctx.fillStyle = '#f8f9fa';
-  ctx.fillRect(0, 0, W, H);
-
-  // Grid lines
-  ctx.strokeStyle = '#e9ecef';
-  ctx.lineWidth = 1;
-  for (let v = 36; v <= 39; v += 0.5) {
-    const y = yPos(v);
-    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(W-pad.right, y); ctx.stroke();
-  }
-
-  // Fever line at 37.3
-  const feverY = yPos(37.3);
-  ctx.strokeStyle = 'rgba(220,53,69,0.4)';
-  ctx.setLineDash([4,4]);
-  ctx.beginPath(); ctx.moveTo(pad.left, feverY); ctx.lineTo(W-pad.right, feverY); ctx.stroke();
-  ctx.setLineDash([]);
-  ctx.fillStyle = 'rgba(220,53,69,0.6)';
-  ctx.font = '10px sans-serif';
-  ctx.fillText('37.3°C', W - pad.right - 34, feverY - 4);
-
-  // Line
-  ctx.strokeStyle = '#e8654a';
-  ctx.lineWidth = 2;
-  ctx.beginPath();
-  temps.forEach((t, i) => {
-    const x = xPos(i), y = yPos(t.value);
-    if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
-  });
-  ctx.stroke();
-
-  // Dots and labels
-  temps.forEach((t, i) => {
-    const x = xPos(i), y = yPos(t.value);
-    ctx.fillStyle = t.value >= 37.3 ? '#dc3545' : '#e8654a';
-    ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#6c757d';
-    ctx.font = '10px sans-serif';
-    ctx.textAlign = 'center';
-    const dt = parseLocalDatetime(t.date);
-    ctx.fillText(`${dt.getMonth()+1}/${dt.getDate()}`, x, H - 8);
-    ctx.fillText(t.value + '°', x, y - 10);
-  });
-
-  // Y axis labels
-  ctx.textAlign = 'right';
-  ctx.fillStyle = '#adb5bd';
-  ctx.font = '10px sans-serif';
-  for (let v = 36; v <= 39; v += 1) {
-    ctx.fillText(v + '°', pad.left - 6, yPos(v) + 3);
-  }
-}
-
-// ==================== VISITS ====================
-async function renderVisits() {
-  const el = document.getElementById('page-visit');
-  const visits = (await dbGetAll('visits')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-
-  let html = `
-  <div class="page-header">
-    <div class="page-title">就诊记录</div>
-    <div class="page-subtitle">共${visits.length}次就诊</div>
-  </div>
-  <div class="date-filter">
-    <input type="date" id="visit-date-from" onchange="renderVisits()">
-    <span>至</span>
-    <input type="date" id="visit-date-to" onchange="renderVisits()">
-  </div>`;
-
-  // Apply date filter
-  const fromVal = document.getElementById('visit-date-from')?.value;
-  const toVal = document.getElementById('visit-date-to')?.value;
-  let filtered = visits;
-  if (fromVal) filtered = filtered.filter(v => v.date >= fromVal);
-  if (toVal) filtered = filtered.filter(v => v.date <= toVal + 'T23:59');
-
-  if (filtered.length === 0) {
-    html += `<div class="empty-state">
-      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg></div>
-      <div class="empty-title">暂无就诊记录</div>
-      <div class="empty-desc">点击右下角按钮添加就诊记录</div>
+      <div class="empty-title">还没有病程记录</div>
+      <div class="empty-desc">点击右下角按钮，记录宝贝的第一次生病</div>
     </div>`;
   } else {
-    filtered.forEach(v => {
-      html += `<div class="card" onclick="openVisitForm('${v.id}')">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${v.diagnosis || '就诊记录'}</div>
-            <div class="card-meta">${formatDatetime(v.date)}</div>
-          </div>
-          <span class="card-badge">${v.hospital || '未填医院'}</span>
+    for (const ill of illnesses) {
+      const title = await getIllnessTitle(ill);
+      const dateRange = formatDateShort(ill.startDate) + (ill.endDate ? ' - ' + formatDateShort(ill.endDate) : ' - 进行中');
+      const counts = await getIllnessCounts(ill.id);
+      const isRecovered = ill.status === 'recovered';
+
+      html += `<div class="illness-card ${isRecovered?'recovered':''}" onclick="openIllnessDetail('${ill.id}')">
+        <div class="illness-card-header">
+          <div class="illness-card-title">${title}</div>
+          <span class="status-tag ${ill.status}">${isRecovered?'已康复':'进行中'}</span>
         </div>
-        ${v.symptoms && v.symptoms.length ? `<div class="card-meta" style="margin-bottom:4px">${v.symptoms.map(s=>`<span class="tag tag-primary">${s}</span>`).join(' ')}</div>` : ''}
-        ${v.department ? `<div class="card-meta">${v.department} ${v.doctor ? '· '+v.doctor : ''}</div>` : ''}
-        ${v.notes ? `<div class="card-meta" style="margin-top:6px;color:var(--text)">${v.notes.length > 60 ? v.notes.substring(0,60)+'…' : v.notes}</div>` : ''}
+        <div class="illness-card-dates">${dateRange}</div>
+        <div class="illness-card-summary">
+          <span>🏥 就诊${counts.visits}次</span>
+          <span>💊 用药${counts.meds}种</span>
+          <span>📋 检查${counts.checkups}项</span>
+        </div>
       </div>`;
-    });
+    }
   }
 
-  html += `<button class="fab" onclick="openVisitForm()">
+  html += `</div>
+  <button class="fab" onclick="openNewIllnessForm()">
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>`;
 
   el.innerHTML = html;
 }
 
-async function openVisitForm(id) {
-  let v = id ? await dbGet('visits', id) : null;
-  if (!v) v = { id:genId(), date:new Date().toISOString().slice(0,16), hospital:'', department:'', doctor:'', symptoms:[], diagnosis:'', notes:'', checkupIds:[], medicationIds:[], createdAt:new Date().toISOString() };
-
-  // Load existing photos
-  const existingPhotos = id ? await getPhotosForRecord('visits', id) : [];
-  pendingPhotos = existingPhotos.map(p => ({ id:p.id, thumb:p.thumbnail, full:p.data, isExisting:true }));
-
-  const checkups = await dbGetAll('checkups');
-  const meds = await dbGetAll('medications');
-
-  const now = new Date();
-  const defaultDate = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + 'T' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-
-  let html = `
-  <div class="form-group">
-    <label class="form-label">就诊日期</label>
-    <input type="datetime-local" class="form-input" id="f-visit-date" value="${v.date || defaultDate}">
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">医院</label><input class="form-input" id="f-visit-hospital" value="${v.hospital}" placeholder="医院名称"></div>
-    <div class="form-group"><label class="form-label">科室</label><input class="form-input" id="f-visit-department" value="${v.department}" placeholder="科室"></div>
-  </div>
-  <div class="form-group"><label class="form-label">医生</label><input class="form-input" id="f-visit-doctor" value="${v.doctor}" placeholder="医生姓名"></div>
-  <div class="form-group"><label class="form-label">主诉/症状</label><input class="form-input" id="f-visit-symptoms" value="${(v.symptoms||[]).join('，')}" placeholder="多个症状用逗号分隔"><div class="form-hint">如：发热，咳嗽，流鼻涕</div></div>
-  <div class="form-group"><label class="form-label">诊断结果</label><input class="form-input" id="f-visit-diagnosis" value="${v.diagnosis}" placeholder="医生诊断"></div>
-  <div class="form-group"><label class="form-label">医嘱/备注</label><textarea class="form-input" id="f-visit-notes" placeholder="医嘱和注意事项">${v.notes}</textarea></div>
-
-  <div class="form-group"><label class="form-label">就诊照片（最多10张）</label>
-    <div id="photo-preview-area"></div>
-  </div>`;
-
-  // Link checkups
-  if (checkups.length) {
-    html += `<div class="form-group"><label class="form-label">关联检查报告</label><div class="link-list">`;
-    checkups.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).forEach(c => {
-      const checked = (v.checkupIds||[]).includes(c.id) ? 'checked' : '';
-      html += `<label class="link-item"><input type="checkbox" value="${c.id}" ${checked}><div class="link-item-content"><div class="link-item-title">${c.type} - ${formatDate(c.date)}</div><div class="link-item-meta">${c.hospital||''}</div></div></label>`;
-    });
-    html += `</div></div>`;
+async function getIllnessTitle(ill) {
+  if (ill.title) return ill.title;
+  // Auto-generate: try diagnosis from visit events
+  const events = await dbGetByIndex('events', 'illnessId', ill.id);
+  const visitEvent = events.find(e => e.eventType === 'visit' && e.data.diagnosis);
+  if (visitEvent) return visitEvent.data.diagnosis;
+  // Try first symptom
+  const symptomEvent = events.find(e => e.eventType === 'symptom' && e.data.name);
+  if (symptomEvent) {
+    const start = parseLocalDatetime(ill.startDate);
+    const now = ill.status === 'recovered' && ill.endDate ? parseLocalDatetime(ill.endDate) : new Date();
+    const days = Math.max(1, Math.ceil((now - start) / 86400000));
+    return symptomEvent.data.name + days + '天';
   }
-
-  // Link meds
-  if (meds.length) {
-    html += `<div class="form-group"><label class="form-label">关联用药</label><div class="link-list">`;
-    meds.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).forEach(m => {
-      const checked = (v.medicationIds||[]).includes(m.id) ? 'checked' : '';
-      html += `<label class="link-item"><input type="checkbox" value="${m.id}" ${checked}><div class="link-item-content"><div class="link-item-title">${m.name} ${m.dosage}</div><div class="link-item-meta">${m.frequency} · ${m.status}</div></div></label>`;
-    });
-    html += `</div></div>`;
-  }
-
-  html += `<button class="btn btn-primary btn-block" onclick="saveVisit('${v.id}')">保存就诊记录</button>`;
-
-  openFullModal(id ? '编辑就诊' : '记就诊', html, 'visits', id);
-  renderPhotoPreview();
+  return '未命名病程';
 }
 
-async function saveVisit(id) {
-  const date = document.getElementById('f-visit-date').value;
-  const hospital = document.getElementById('f-visit-hospital').value.trim();
-  const department = document.getElementById('f-visit-department').value.trim();
-  const doctor = document.getElementById('f-visit-doctor').value.trim();
-  const symptomsStr = document.getElementById('f-visit-symptoms').value.trim();
-  const symptoms = symptomsStr ? symptomsStr.split(/[,，、]/).map(s=>s.trim()).filter(Boolean) : [];
-  const diagnosis = document.getElementById('f-visit-diagnosis').value.trim();
-  const notes = document.getElementById('f-visit-notes').value.trim();
-
-  // Get linked items
-  const checkupIds = [];
-  document.querySelectorAll('#full-modal-body .link-item input[type=checkbox]').forEach((cb, i) => {
-    // We need to distinguish checkups from meds - checkups come first
-  });
-
-  // Simpler: collect all checked
-  const allCheckboxes = document.querySelectorAll('#full-modal-body .link-item input[type=checkbox]');
-  const checkupCount = (await dbGetAll('checkups')).length;
-  const checkedValues = [];
-  allCheckboxes.forEach(cb => { if (cb.checked) checkedValues.push(cb.value); });
-
-  // Determine which are checkupIds and which are medicationIds
-  const allCheckupIds = (await dbGetAll('checkups')).map(c=>c.id);
-  const checkupIdsFinal = checkedValues.filter(v => allCheckupIds.includes(v));
-  const medicationIdsFinal = checkedValues.filter(v => !allCheckupIds.includes(v));
-
-  const existing = id ? await dbGet('visits', id) : null;
-
-  const data = {
-    id, date, hospital, department, doctor, symptoms, diagnosis, notes,
-    checkupIds: checkupIdsFinal, medicationIds: medicationIdsFinal,
-    createdAt: existing ? existing.createdAt : new Date().toISOString()
+async function getIllnessCounts(illnessId) {
+  const events = await dbGetByIndex('events', 'illnessId', illnessId);
+  return {
+    visits: events.filter(e => e.eventType === 'visit').length,
+    meds: events.filter(e => e.eventType === 'medication').length,
+    checkups: events.filter(e => e.eventType === 'checkup').length,
+    symptoms: events.filter(e => e.eventType === 'symptom').length,
+    temps: events.filter(e => e.eventType === 'temperature').length,
   };
-
-  await dbPut('visits', data);
-
-  // Save new photos
-  for (const p of pendingPhotos) {
-    if (!p.isExisting) {
-      await savePhoto('visits', id, p.file);
-    }
-  }
-
-  // Delete removed existing photos
-  if (existing) {
-    const currentPhotoIds = pendingPhotos.filter(p=>p.isExisting).map(p=>p.id);
-    const oldPhotos = await getPhotosForRecord('visits', id);
-    for (const op of oldPhotos) {
-      if (!currentPhotoIds.includes(op.id)) {
-        await dbDelete('photos', op.id);
-      }
-    }
-  }
-
-  closeFullModal();
-  showToast('就诊记录已保存');
-  renderPage(currentPage);
 }
 
-// ==================== CHECKUPS ====================
-async function renderCheckups() {
-  const el = document.getElementById('page-checkup');
-  const checkups = (await dbGetAll('checkups')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
+// ==================== Search ====================
+let homeSearchTimer = null;
+function debounceHomeSearch() {
+  clearTimeout(homeSearchTimer);
+  homeSearchTimer = setTimeout(() => doHomeSearch(), 400);
+}
 
-  const types = ['全部','血常规','尿常规','便常规','X光','CT','B超','过敏原','其他'];
+async function doHomeSearch() {
+  const keyword = document.getElementById('home-search-input')?.value.trim();
+  const resultsContainer = document.getElementById('home-search-results');
+  const listContainer = document.getElementById('illness-list');
 
-  let html = `
-  <div class="page-header">
-    <div class="page-title">检查报告</div>
-    <div class="page-subtitle">共${checkups.length}份报告</div>
-  </div>
-  <div class="filter-bar">${types.map(t => `<button class="filter-chip ${t==='全部'?'active':''}" onclick="filterCheckups('${t}',this)">${t}</button>`).join('')}</div>`;
+  if (!keyword) {
+    resultsContainer.innerHTML = '';
+    listContainer.style.display = '';
+    return;
+  }
 
-  if (checkups.length === 0) {
-    html += `<div class="empty-state">
-      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/><path d="M12 18v-6"/><path d="M9 15h6"/></svg></div>
-      <div class="empty-title">暂无检查报告</div>
-      <div class="empty-desc">点击右下角按钮添加检查报告</div>
-    </div>`;
+  addSearchHistory(keyword);
+  listContainer.style.display = 'none';
+
+  const kw = keyword.toLowerCase();
+  const results = [];
+
+  // Search events
+  const allEvents = await dbGetAll('events');
+  const allIllnesses = await dbGetAll('illnesses');
+  const illnessMap = {};
+  allIllnesses.forEach(i => illnessMap[i.id] = i);
+
+  for (const ev of allEvents) {
+    let match = false;
+    let summary = '';
+    switch(ev.eventType) {
+      case 'symptom':
+        match = [ev.data.name, ev.data.notes].filter(Boolean).join(' ').toLowerCase().includes(kw);
+        summary = ev.data.name;
+        break;
+      case 'temperature':
+        const val = String(ev.data.value);
+        match = val.includes(kw) || (ev.data.notes||'').toLowerCase().includes(kw);
+        summary = ev.data.value + '°C';
+        break;
+      case 'visit':
+        match = [ev.data.diagnosis, ev.data.hospital, ev.data.department, ev.data.doctor, ev.data.notes].filter(Boolean).join(' ').toLowerCase().includes(kw);
+        summary = ev.data.diagnosis || ev.data.hospital || '就诊';
+        break;
+      case 'checkup':
+        match = [ev.data.type, ev.data.details, ev.data.hospital].filter(Boolean).join(' ').toLowerCase().includes(kw);
+        summary = ev.data.type + (ev.data.details ? ': ' + ev.data.details.substring(0,30) : '');
+        break;
+      case 'medication':
+        match = [ev.data.name, ev.data.dosage, ev.data.frequency, ev.data.sideEffects].filter(Boolean).join(' ').toLowerCase().includes(kw);
+        summary = ev.data.name + ' ' + (ev.data.dosage||'');
+        break;
+    }
+    if (match) {
+      const ill = illnessMap[ev.illnessId];
+      const illTitle = ill ? (ill.title || await getIllnessTitle(ill)) : '未知病程';
+      const emoji = {symptom:'😷',temperature:'🌡️',visit:'🏥',checkup:'📋',medication:'💊'}[ev.eventType] || '📝';
+      results.push({
+        illnessId: ev.illnessId,
+        illTitle,
+        emoji,
+        summary: highlightText(summary, keyword),
+        time: formatDatetime(ev.timestamp)
+      });
+    }
+  }
+
+  // Also search vaccines
+  const vaccines = await dbGetAll('vaccines');
+  for (const v of vaccines) {
+    if ([v.name, v.hospital, v.notes].filter(Boolean).join(' ').toLowerCase().includes(kw)) {
+      results.push({
+        illnessId: null,
+        illTitle: '疫苗记录',
+        emoji: '💉',
+        summary: highlightText(v.name, keyword),
+        time: formatDate(v.date)
+      });
+    }
+  }
+
+  if (results.length === 0) {
+    resultsContainer.innerHTML = `<div class="empty-state" style="padding:40px"><div class="empty-desc">未找到相关记录</div></div>`;
   } else {
-    checkups.forEach(c => {
-      html += `<div class="card checkup-card" data-type="${c.type}" onclick="openCheckupForm('${c.id}')">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${c.type}</div>
-            <div class="card-meta">${formatDate(c.date)} · ${c.hospital||''}</div>
-          </div>
-          <span class="card-badge blue">${c.type}</span>
+    let html = '';
+    results.forEach(r => {
+      const onclick = r.illnessId ? `openIllnessDetail('${r.illnessId}')` : '';
+      html += `<div class="search-result-item" onclick="${onclick}">
+        <div class="search-result-icon" style="background:var(--bg-secondary);font-size:20px;">${r.emoji}</div>
+        <div class="search-result-content">
+          <div class="search-result-title">${r.summary}</div>
+          <div class="search-result-meta">${r.illTitle} · ${r.time}</div>
         </div>
-        ${c.details ? `<div class="card-meta" style="margin-top:6px;color:var(--text)">${c.details.length > 80 ? c.details.substring(0,80)+'…' : c.details}</div>` : ''}
       </div>`;
     });
+    resultsContainer.innerHTML = html;
   }
-
-  html += `<button class="fab" onclick="openCheckupForm()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>`;
-
-  el.innerHTML = html;
 }
 
-function filterCheckups(type, btn) {
-  document.querySelectorAll('.filter-chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  document.querySelectorAll('.checkup-card').forEach(c => {
-    c.style.display = (type === '全部' || c.dataset.type === type) ? '' : 'none';
-  });
+function highlightText(text, keyword) {
+  if (!keyword || !text) return text;
+  const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
+  return text.replace(regex, '<span class="search-highlight">$1</span>');
 }
 
-async function openCheckupForm(id) {
-  let c = id ? await dbGet('checkups', id) : null;
-  if (!c) c = { id:genId(), type:'血常规', date:formatDate(new Date()), hospital:'', details:'', visitId:'', createdAt:new Date().toISOString() };
-
-  const existingPhotos = id ? await getPhotosForRecord('checkups', id) : [];
-  pendingPhotos = existingPhotos.map(p => ({ id:p.id, thumb:p.thumbnail, full:p.data, isExisting:true }));
-
-  const visits = await dbGetAll('visits');
-
-  const types = ['血常规','尿常规','便常规','X光','CT','B超','过敏原','其他'];
-
-  let html = `
-  <div class="form-group"><label class="form-label">报告类型</label>
-    <div class="select-wrapper">
-      <select class="form-select" id="f-checkup-type">
-        ${types.map(t=>`<option value="${t}" ${c.type===t?'selected':''}>${t}</option>`).join('')}
-      </select>
-      <span class="select-arrow">▾</span>
+// ==================== New Illness ====================
+async function openNewIllnessForm() {
+  const html = `
+  <div class="form-group"><label class="form-label">病程标题（可选）</label><input class="form-input" id="f-ill-title" placeholder="如：发烧、支气管炎，留空自动生成"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">开始日期</label><input type="date" class="form-input" id="f-ill-start" value="${todayISO()}"></div>
+    <div class="form-group"><label class="form-label">状态</label>
+      <div class="select-wrapper">
+        <select class="form-select" id="f-ill-status">
+          <option value="ongoing">进行中</option>
+          <option value="recovered">已康复</option>
+        </select><span class="select-arrow">▾</span>
+      </div>
     </div>
   </div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">检查日期</label><input type="date" class="form-input" id="f-checkup-date" value="${c.date}"></div>
-    <div class="form-group"><label class="form-label">检查医院</label><input class="form-input" id="f-checkup-hospital" value="${c.hospital}" placeholder="医院"></div>
-  </div>
-  <div class="form-group"><label class="form-label">报告详情</label><textarea class="form-input" id="f-checkup-details" placeholder="输入检查指标和结果" rows="4">${c.details}</textarea></div>
+  <button class="btn btn-primary btn-block" onclick="saveNewIllness()">创建病程</button>`;
 
-  <div class="form-group"><label class="form-label">拍照上传（最多10张）</label>
-    <div id="photo-preview-area"></div>
-  </div>`;
-
-  if (visits.length) {
-    html += `<div class="form-group"><label class="form-label">关联就诊记录</label><div class="select-wrapper">
-      <select class="form-select" id="f-checkup-visit">
-        <option value="">不关联</option>
-        ${visits.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(v=>`<option value="${v.id}" ${c.visitId===v.id?'selected':''}>${formatDate(v.date)} ${v.diagnosis||''}</option>`).join('')}
-      </select><span class="select-arrow">▾</span></div></div>`;
-  }
-
-  html += `<button class="btn btn-primary btn-block" onclick="saveCheckup('${c.id}')">保存检查报告</button>`;
-
-  openFullModal(id ? '编辑检查' : '记检查', html, 'checkups', id);
-  renderPhotoPreview();
+  openFullModal('新建病程', html, 'illness', null, null);
 }
 
-async function saveCheckup(id) {
-  const type = document.getElementById('f-checkup-type').value;
-  const date = document.getElementById('f-checkup-date').value;
-  const hospital = document.getElementById('f-checkup-hospital').value.trim();
-  const details = document.getElementById('f-checkup-details').value.trim();
-  const visitId = document.getElementById('f-checkup-visit')?.value || '';
+async function saveNewIllness() {
+  const title = document.getElementById('f-ill-title').value.trim();
+  const startDate = document.getElementById('f-ill-start').value;
+  const status = document.getElementById('f-ill-status').value;
+  const now = new Date().toISOString();
 
-  const existing = id ? await dbGet('checkups', id) : null;
-  const data = { id, type, date, hospital, details, visitId, createdAt: existing ? existing.createdAt : new Date().toISOString() };
+  const illness = {
+    id: genId(),
+    title: title || '',
+    startDate,
+    endDate: status === 'recovered' ? todayISO() : '',
+    status,
+    createdAt: now,
+    updatedAt: now
+  };
 
-  await dbPut('checkups', data);
-
-  for (const p of pendingPhotos) {
-    if (!p.isExisting) { await savePhoto('checkups', id, p.file); }
-  }
-  if (existing) {
-    const currentPhotoIds = pendingPhotos.filter(p=>p.isExisting).map(p=>p.id);
-    const oldPhotos = await getPhotosForRecord('checkups', id);
-    for (const op of oldPhotos) {
-      if (!currentPhotoIds.includes(op.id)) await dbDelete('photos', op.id);
-    }
-  }
-
+  await dbPut('illnesses', illness);
   closeFullModal();
-  showToast('检查报告已保存');
+  showToast('病程已创建');
+
+  if (status === 'recovered') {
+    renderHome();
+  } else {
+    openIllnessDetail(illness.id);
+  }
+}
+
+// ==================== Illness Detail ====================
+async function openIllnessDetail(illnessId) {
+  currentIllnessId = illnessId;
+  await renderIllnessDetail(illnessId);
+  document.getElementById('illness-detail').classList.add('show');
+}
+
+function closeIllnessDetail() {
+  document.getElementById('illness-detail').classList.remove('show');
+  currentIllnessId = null;
   renderPage(currentPage);
 }
 
-// ==================== TRACK ====================
-async function renderTrack() {
-  const el = document.getElementById('page-track');
-  let html = `
-  <div class="page-header">
-    <div class="page-title">健康追踪</div>
-  </div>
-  <div class="sub-tabs">
-    <button class="sub-tab ${currentSubTab==='symptoms'?'active':''}" onclick="currentSubTab='symptoms';renderTrack()">症状</button>
-    <button class="sub-tab ${currentSubTab==='temperature'?'active':''}" onclick="currentSubTab='temperature';renderTrack()">体温</button>
-    <button class="sub-tab ${currentSubTab==='medications'?'active':''}" onclick="currentSubTab='medications';renderTrack()">用药</button>
-    <button class="sub-tab ${currentSubTab==='vaccines'?'active':''}" onclick="currentSubTab='vaccines';renderTrack()">疫苗</button>
+async function renderIllnessDetail(illnessId) {
+  const ill = await dbGet('illnesses', illnessId);
+  if (!ill) { closeIllnessDetail(); return; }
+
+  const title = await getIllnessTitle(ill);
+  document.getElementById('detail-title').textContent = title;
+
+  const events = (await dbGetByIndex('events', 'illnessId', illnessId))
+    .sort((a,b) => b.timestamp.localeCompare(a.timestamp));
+
+  let bodyHTML = '';
+
+  // Detail header info
+  const dateRange = formatDateShort(ill.startDate) + (ill.endDate ? ' - ' + formatDateShort(ill.endDate) : ' - 进行中');
+  bodyHTML += `<div class="detail-header" style="margin:-20px -20px 0;padding:20px;border-bottom:1px solid var(--border);">
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+      <span style="font-size:20px;font-weight:700;">${title}</span>
+      <span class="status-tag ${ill.status}">${ill.status==='recovered'?'已康复':'进行中'}</span>
+    </div>
+    <div style="font-size:14px;color:var(--text-secondary);">${dateRange}</div>
   </div>`;
 
-  if (currentSubTab === 'symptoms') {
-    html += await renderSymptomsTab();
-  } else if (currentSubTab === 'temperature') {
-    html += await renderTemperatureTab();
-  } else if (currentSubTab === 'medications') {
-    html += await renderMedicationsTab();
-  } else if (currentSubTab === 'vaccines') {
-    html += await renderVaccinesTab();
+  // Timeline
+  if (events.length === 0) {
+    bodyHTML += `<div class="empty-state" style="padding:60px 20px">
+      <div class="empty-desc">还没有记录，点击下方按钮添加事件</div>
+    </div>`;
+  } else {
+    // Group by date
+    const groups = {};
+    for (const ev of events) {
+      const dt = parseLocalDatetime(ev.timestamp);
+      const dayKey = formatDate(dt);
+      if (!groups[dayKey]) groups[dayKey] = [];
+      groups[dayKey].push(ev);
+    }
+
+    // Sort days descending
+    const sortedDays = Object.keys(groups).sort((a,b) => b.localeCompare(a));
+
+    bodyHTML += '<div class="timeline-container" style="padding-top:16px;">';
+    for (const day of sortedDays) {
+      const dt = parseLocalDatetime(day);
+      const weekday = ['日','一','二','三','四','五','六'][dt.getDay()];
+      bodyHTML += `<div class="timeline-day">
+        <div class="timeline-day-header">${dt.getMonth()+1}月${dt.getDate()}日 周${weekday}</div>
+        <div class="timeline-line">`;
+
+      // Sort events within day by timestamp descending
+      const dayEvents = groups[day].sort((a,b) => b.timestamp.localeCompare(a.timestamp));
+
+      for (const ev of dayEvents) {
+        bodyHTML += await renderTimelineEvent(ev);
+      }
+
+      bodyHTML += '</div></div>';
+    }
+    bodyHTML += '</div>';
   }
 
-  el.innerHTML = html;
+  document.getElementById('detail-body').innerHTML = bodyHTML;
 
-  // Draw temp chart
-  if (currentSubTab === 'temperature') {
-    const temps = (await dbGetAll('temperatures')).sort((a,b) => a.date.localeCompare(b.date));
-    if (temps.length > 1) {
-      setTimeout(() => drawTempChart('temp-chart-track', temps.slice(-30)), 50);
+  // Add event bar
+  document.getElementById('add-event-bar').innerHTML = `
+    <button class="add-event-btn" onclick="openEventForm('symptom')"><span class="evt-icon">😷</span>记症状</button>
+    <button class="add-event-btn" onclick="openEventForm('temperature')"><span class="evt-icon">🌡️</span>记体温</button>
+    <button class="add-event-btn" onclick="openEventForm('visit')"><span class="evt-icon">🏥</span>记就诊</button>
+    <button class="add-event-btn" onclick="openEventForm('checkup')"><span class="evt-icon">📋</span>记检查</button>
+    <button class="add-event-btn" onclick="openEventForm('medication')"><span class="evt-icon">💊</span>记用药</button>
+  `;
+}
+
+async function renderTimelineEvent(ev) {
+  const time = formatTime(ev.timestamp);
+  let icon = '', cls = ev.eventType, detail = '', isFever = false;
+
+  switch(ev.eventType) {
+    case 'symptom':
+      icon = '😷';
+      const stars = '★'.repeat(ev.data.severity||0) + '☆'.repeat(5-(ev.data.severity||0));
+      detail = ev.data.notes ? `<div class="timeline-event-detail">${ev.data.name} <span style="color:var(--primary);font-size:12px">${stars}</span>${ev.data.notes ? ' · '+ev.data.notes : ''}</div>` :
+        `<div class="timeline-event-detail">${ev.data.name} <span style="color:var(--primary);font-size:12px">${stars}</span></div>`;
+      break;
+    case 'temperature':
+      isFever = ev.data.value >= 37.3;
+      icon = '🌡️';
+      cls = isFever ? 'temperature fever' : 'temperature';
+      const tempCls = isFever ? 'temp-highlight' : 'temp-normal-val';
+      detail = `<div class="timeline-event-detail"><span class="${tempCls}">${ev.data.value}°C</span>${ev.data.notes ? ' · '+ev.data.notes : ''}</div>`;
+      break;
+    case 'visit':
+      icon = '🏥';
+      detail = `<div style="font-size:14px;font-weight:500;">${ev.data.hospital||'就诊'} ${ev.data.department?'· '+ev.data.department:''}</div>`;
+      if (ev.data.diagnosis) detail += `<div class="timeline-event-detail">诊断：${ev.data.diagnosis}</div>`;
+      if (ev.data.notes) detail += `<div class="timeline-event-detail">医嘱：${ev.data.notes.length>60?ev.data.notes.substring(0,60)+'…':ev.data.notes}</div>`;
+      break;
+    case 'checkup':
+      icon = '📋';
+      detail = `<div style="font-size:14px;font-weight:500;">${ev.data.type}</div>`;
+      if (ev.data.details) detail += `<div class="timeline-event-detail">${ev.data.details.length>60?ev.data.details.substring(0,60)+'…':ev.data.details}</div>`;
+      // Show photo thumbnails
+      const checkupPhotos = await getPhotosForEvent(ev.id);
+      if (checkupPhotos.length) {
+        detail += `<div class="timeline-event-photos">`;
+        checkupPhotos.forEach(p => {
+          detail += `<img src="${p.thumbnail}" onclick="event.stopPropagation();viewPhoto('${p.data.replace(/'/g,"\\'")}')">`;
+        });
+        detail += `</div>`;
+        detail += `<div class="timeline-event-detail">📷${checkupPhotos.length}张</div>`;
+      }
+      break;
+    case 'medication':
+      icon = '💊';
+      detail = `<div style="font-size:14px;font-weight:500;">${ev.data.name}</div>`;
+      detail += `<div class="timeline-event-detail">${ev.data.dosage||''} ${ev.data.frequency?'· '+ev.data.frequency:''}</div>`;
+      if (ev.data.sideEffects) detail += `<div class="timeline-event-detail" style="color:var(--danger)">不良反应: ${ev.data.sideEffects}</div>`;
+      break;
+  }
+
+  return `<div class="timeline-event ${cls}" onclick="openEventForm('${ev.eventType}','${ev.id}')">
+    <span class="timeline-event-time">${time}</span>
+    <div class="timeline-event-icon">${icon} ${ev.eventType==='symptom'?ev.data.name: ev.eventType==='temperature'?(isFever?'发热':'体温'): ev.eventType==='visit'?(ev.data.diagnosis||'就诊'): ev.eventType==='checkup'?ev.data.type: ev.data.name}</div>
+    ${detail}
+  </div>`;
+}
+
+// ==================== Illness Config ====================
+async function showIllnessConfig() {
+  const ill = await dbGet('illnesses', currentIllnessId);
+  if (!ill) return;
+  const title = await getIllnessTitle(ill);
+
+  const html = `
+  <div class="form-group"><label class="form-label">病程标题</label><input class="form-input" id="f-ill-cfg-title" value="${ill.title||''}" placeholder="${title}"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">开始日期</label><input type="date" class="form-input" id="f-ill-cfg-start" value="${ill.startDate}"></div>
+    <div class="form-group"><label class="form-label">结束日期</label><input type="date" class="form-input" id="f-ill-cfg-end" value="${ill.endDate||''}" placeholder="留空表示进行中"></div>
+  </div>
+  <div class="form-group"><label class="form-label">状态</label>
+    <div class="select-wrapper">
+      <select class="form-select" id="f-ill-cfg-status">
+        <option value="ongoing" ${ill.status==='ongoing'?'selected':''}>进行中</option>
+        <option value="recovered" ${ill.status==='recovered'?'selected':''}>已康复</option>
+      </select><span class="select-arrow">▾</span>
+    </div>
+  </div>
+  <button class="btn btn-primary btn-block" onclick="saveIllnessConfig()">保存</button>
+  <div style="height:12px"></div>
+  <button class="btn btn-danger btn-block" onclick="deleteIllness()">删除病程</button>`;
+
+  openFullModal('编辑病程', html, 'illness', ill.id, currentIllnessId);
+}
+
+async function saveIllnessConfig() {
+  const ill = await dbGet('illnesses', currentIllnessId);
+  if (!ill) return;
+
+  const newTitle = document.getElementById('f-ill-cfg-title').value.trim();
+  const newStart = document.getElementById('f-ill-cfg-start').value;
+  const newEnd = document.getElementById('f-ill-cfg-end').value;
+  const newStatus = document.getElementById('f-ill-cfg-status').value;
+
+  ill.title = newTitle;
+  ill.startDate = newStart;
+  ill.endDate = newEnd;
+  ill.status = newStatus;
+  // Mark recovered auto fill end date
+  if (newStatus === 'recovered' && !newEnd) {
+    ill.endDate = todayISO();
+  }
+  ill.updatedAt = new Date().toISOString();
+
+  await dbPut('illnesses', ill);
+  closeFullModal();
+  showToast('病程信息已更新');
+  renderIllnessDetail(currentIllnessId);
+}
+
+async function deleteIllness() {
+  if (!confirm('确定删除此病程？所有关联的事件和照片将一并删除。')) return;
+
+  const events = await dbGetByIndex('events', 'illnessId', currentIllnessId);
+  for (const ev of events) {
+    await deletePhotosForEvent(ev.id);
+    await dbDelete('events', ev.id);
+  }
+  await dbDelete('illnesses', currentIllnessId);
+
+  closeFullModal();
+  closeIllnessDetail();
+  showToast('病程已删除');
+}
+
+// ==================== Event Forms ====================
+async function openEventForm(eventType, eventId) {
+  let ev = eventId ? await dbGet('events', eventId) : null;
+  const illnessId = currentIllnessId;
+  if (!illnessId) return;
+
+  const now = nowISO();
+
+  if (!ev) {
+    ev = {
+      id: genId(),
+      illnessId,
+      eventType,
+      timestamp: now,
+      data: {},
+      photos: [],
+      createdAt: new Date().toISOString()
+    };
+  }
+
+  // Load existing photos
+  const existingPhotos = eventId ? await getPhotosForEvent(eventId) : [];
+  pendingPhotos = existingPhotos.map(p => ({ id:p.id, thumb:p.thumbnail, full:p.data, isExisting:true }));
+
+  let formHTML = '';
+  const typeLabel = {symptom:'症状',temperature:'体温',visit:'就诊',checkup:'检查',medication:'用药'}[eventType];
+
+  switch(eventType) {
+    case 'symptom':
+      formHTML = renderSymptomForm(ev);
+      break;
+    case 'temperature':
+      formHTML = renderTemperatureForm(ev);
+      break;
+    case 'visit':
+      formHTML = renderVisitForm(ev);
+      break;
+    case 'checkup':
+      formHTML = renderCheckupForm(ev);
+      break;
+    case 'medication':
+      formHTML = renderMedicationForm(ev);
+      break;
+  }
+
+  openFullModal((eventId?'编辑':'记')+typeLabel, formHTML, 'event', eventId, illnessId);
+}
+
+function renderSymptomForm(ev) {
+  const d = ev.data || {};
+  return `
+  <div class="form-group"><label class="form-label">症状名称</label><input class="form-input" id="f-evt-name" value="${d.name||''}" placeholder="如：发热、咳嗽、皮疹"></div>
+  <div class="form-group"><label class="form-label">出现时间</label><input type="datetime-local" class="form-input" id="f-evt-time" value="${ev.timestamp||nowISO()}"></div>
+  <div class="form-group"><label class="form-label">严重程度</label>
+    <div class="severity-stars" id="severity-stars">
+      ${[1,2,3,4,5].map(i => `<button type="button" class="severity-star ${i<=(d.severity||3)?'active':''}" data-val="${i}" onclick="setSeverity(${i})"></button>`).join('')}
+    </div>
+    <div class="form-hint">1星最轻，5星最重</div>
+  </div>
+  <div class="form-group"><label class="form-label">备注</label><textarea class="form-input" id="f-evt-notes" placeholder="补充说明">${d.notes||''}</textarea></div>
+  <button class="btn btn-primary btn-block" onclick="saveEvent('symptom')">保存症状</button>`;
+}
+
+function renderTemperatureForm(ev) {
+  const d = ev.data || {};
+  const val = d.value || 36.5;
+  const isFever = val >= 37.3;
+  return `
+  <div class="temp-value-display ${isFever?'temp-fever':'temp-normal'}" id="temp-display">${val}°C</div>
+  <div class="form-group"><label class="form-label">体温 (°C)</label><input type="number" class="form-input" id="f-evt-temp-val" value="${val}" step="0.1" min="35" max="42" oninput="updateTempDisplay()"></div>
+  <div class="form-group"><label class="form-label">测量时间</label><input type="datetime-local" class="form-input" id="f-evt-time" value="${ev.timestamp||nowISO()}"></div>
+  <div class="form-group"><label class="form-label">备注</label><input class="form-input" id="f-evt-notes" value="${d.notes||''}" placeholder="如：腋下测量"></div>
+  <button class="btn btn-primary btn-block" onclick="saveEvent('temperature')">保存体温</button>`;
+}
+
+function renderVisitForm(ev) {
+  const d = ev.data || {};
+  return `
+  <div class="form-group"><label class="form-label">就诊时间</label><input type="datetime-local" class="form-input" id="f-evt-time" value="${ev.timestamp||nowISO()}"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">医院</label><input class="form-input" id="f-evt-hospital" value="${d.hospital||''}" placeholder="医院名称"></div>
+    <div class="form-group"><label class="form-label">科室</label><input class="form-input" id="f-evt-department" value="${d.department||''}" placeholder="科室"></div>
+  </div>
+  <div class="form-group"><label class="form-label">医生</label><input class="form-input" id="f-evt-doctor" value="${d.doctor||''}" placeholder="医生姓名"></div>
+  <div class="form-group"><label class="form-label">诊断结果</label><input class="form-input" id="f-evt-diagnosis" value="${d.diagnosis||''}" placeholder="医生诊断"></div>
+  <div class="form-group"><label class="form-label">医嘱/备注</label><textarea class="form-input" id="f-evt-notes" placeholder="医嘱和注意事项">${d.notes||''}</textarea></div>
+  <div class="form-group"><label class="form-label">就诊照片（最多10张）</label><div id="photo-preview-area"></div></div>
+  <button class="btn btn-primary btn-block" onclick="saveEvent('visit')">保存就诊</button>`;
+}
+
+function renderCheckupForm(ev) {
+  const d = ev.data || {};
+  const types = ['血常规','尿常规','便常规','X光','CT','B超','过敏原','其他'];
+  return `
+  <div class="form-group"><label class="form-label">检查类型</label>
+    <div class="select-wrapper">
+      <select class="form-select" id="f-evt-checkup-type">
+        ${types.map(t=>`<option value="${t}" ${d.type===t?'selected':''}>${t}</option>`).join('')}
+      </select><span class="select-arrow">▾</span>
+    </div>
+  </div>
+  <div class="form-group"><label class="form-label">检查时间</label><input type="datetime-local" class="form-input" id="f-evt-time" value="${ev.timestamp||nowISO()}"></div>
+  <div class="form-group"><label class="form-label">医院</label><input class="form-input" id="f-evt-hospital" value="${d.hospital||''}" placeholder="医院"></div>
+  <div class="form-group"><label class="form-label">检查详情</label><textarea class="form-input" id="f-evt-details" placeholder="输入检查指标和结果" rows="4">${d.details||''}</textarea></div>
+  <div class="form-group"><label class="form-label">拍照上传（最多10张）</label><div id="photo-preview-area"></div></div>
+  <button class="btn btn-primary btn-block" onclick="saveEvent('checkup')">保存检查</button>`;
+}
+
+function renderMedicationForm(ev) {
+  const d = ev.data || {};
+  return `
+  <div class="form-group"><label class="form-label">药品名称</label><input class="form-input" id="f-evt-name" value="${d.name||''}" placeholder="药品名称"></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">剂量</label><input class="form-input" id="f-evt-dosage" value="${d.dosage||''}" placeholder="如：5ml/次"></div>
+    <div class="form-group"><label class="form-label">频次</label><input class="form-input" id="f-evt-frequency" value="${d.frequency||''}" placeholder="如：一日三次"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">开始日期</label><input type="date" class="form-input" id="f-evt-med-start" value="${d.startDate||todayISO()}"></div>
+    <div class="form-group"><label class="form-label">结束日期</label><input type="date" class="form-input" id="f-evt-med-end" value="${d.endDate||''}" placeholder="可选"></div>
+  </div>
+  <div class="form-group"><label class="form-label">备注/不良反应</label><input class="form-input" id="f-evt-notes" value="${d.sideEffects||''}" placeholder="如有不良反应请记录"></div>
+  <button class="btn btn-primary btn-block" onclick="saveEvent('medication')">保存用药</button>`;
+}
+
+function setSeverity(val) {
+  document.querySelectorAll('#severity-stars .severity-star').forEach(s => {
+    s.classList.toggle('active', parseInt(s.dataset.val) <= val);
+  });
+}
+
+function updateTempDisplay() {
+  const val = parseFloat(document.getElementById('f-evt-temp-val').value) || 36.5;
+  const disp = document.getElementById('temp-display');
+  disp.textContent = val + '°C';
+  disp.className = 'temp-value-display ' + (val >= 37.3 ? 'temp-fever' : 'temp-normal');
+}
+
+async function saveEvent(eventType) {
+  const eventId = currentEditId || genId();
+  const illnessId = currentEditIllnessId;
+  const isEdit = !!currentEditId;
+  let data = {};
+
+  switch(eventType) {
+    case 'symptom': {
+      const name = document.getElementById('f-evt-name').value.trim();
+      if (!name) { showToast('请输入症状名称'); return; }
+      const timestamp = document.getElementById('f-evt-time').value;
+      const stars = document.querySelectorAll('#severity-stars .severity-star.active');
+      const severity = stars.length || 3;
+      const notes = document.getElementById('f-evt-notes').value.trim();
+      data = { name, severity, notes };
+      const ev = { id: eventId, illnessId, eventType, timestamp, data, createdAt: isEdit ? (await dbGet('events', eventId))?.createdAt || new Date().toISOString() : new Date().toISOString() };
+      await dbPut('events', ev);
+      break;
+    }
+    case 'temperature': {
+      const value = parseFloat(document.getElementById('f-evt-temp-val').value);
+      if (isNaN(value) || value < 35 || value > 42) { showToast('请输入有效体温'); return; }
+      const timestamp = document.getElementById('f-evt-time').value;
+      const notes = document.getElementById('f-evt-notes').value.trim();
+      data = { value, notes };
+      const ev = { id: eventId, illnessId, eventType, timestamp, data, createdAt: isEdit ? (await dbGet('events', eventId))?.createdAt || new Date().toISOString() : new Date().toISOString() };
+      await dbPut('events', ev);
+      break;
+    }
+    case 'visit': {
+      const timestamp = document.getElementById('f-evt-time').value;
+      const hospital = document.getElementById('f-evt-hospital').value.trim();
+      const department = document.getElementById('f-evt-department').value.trim();
+      const doctor = document.getElementById('f-evt-doctor').value.trim();
+      const diagnosis = document.getElementById('f-evt-diagnosis').value.trim();
+      const notes = document.getElementById('f-evt-notes').value.trim();
+      data = { hospital, department, doctor, diagnosis, notes };
+      const ev = { id: eventId, illnessId, eventType, timestamp, data, createdAt: isEdit ? (await dbGet('events', eventId))?.createdAt || new Date().toISOString() : new Date().toISOString() };
+      await dbPut('events', ev);
+
+      // Save photos
+      for (const p of pendingPhotos) {
+        if (!p.isExisting) {
+          await savePhoto(eventId, p.file);
+        }
+      }
+      if (isEdit) {
+        const currentPhotoIds = pendingPhotos.filter(p=>p.isExisting).map(p=>p.id);
+        const oldPhotos = await getPhotosForEvent(eventId);
+        for (const op of oldPhotos) {
+          if (!currentPhotoIds.includes(op.id)) await dbDelete('photos', op.id);
+        }
+      }
+      break;
+    }
+    case 'checkup': {
+      const type = document.getElementById('f-evt-checkup-type').value;
+      const timestamp = document.getElementById('f-evt-time').value;
+      const hospital = document.getElementById('f-evt-hospital').value.trim();
+      const details = document.getElementById('f-evt-details').value.trim();
+      data = { type, hospital, details };
+      const ev = { id: eventId, illnessId, eventType, timestamp, data, createdAt: isEdit ? (await dbGet('events', eventId))?.createdAt || new Date().toISOString() : new Date().toISOString() };
+      await dbPut('events', ev);
+
+      // Save photos
+      for (const p of pendingPhotos) {
+        if (!p.isExisting) {
+          await savePhoto(eventId, p.file);
+        }
+      }
+      if (isEdit) {
+        const currentPhotoIds = pendingPhotos.filter(p=>p.isExisting).map(p=>p.id);
+        const oldPhotos = await getPhotosForEvent(eventId);
+        for (const op of oldPhotos) {
+          if (!currentPhotoIds.includes(op.id)) await dbDelete('photos', op.id);
+        }
+      }
+      break;
+    }
+    case 'medication': {
+      const name = document.getElementById('f-evt-name').value.trim();
+      if (!name) { showToast('请输入药品名称'); return; }
+      const dosage = document.getElementById('f-evt-dosage').value.trim();
+      const frequency = document.getElementById('f-evt-frequency').value.trim();
+      const startDate = document.getElementById('f-evt-med-start').value;
+      const endDate = document.getElementById('f-evt-med-end').value;
+      const sideEffects = document.getElementById('f-evt-notes').value.trim();
+      data = { name, dosage, frequency, startDate, endDate, sideEffects };
+      // Use start date + current time as timestamp for medication
+      const timestamp = startDate ? startDate + 'T' + new Date().getHours().toString().padStart(2,'0') + ':' + new Date().getMinutes().toString().padStart(2,'0') : nowISO();
+      const ev = { id: eventId, illnessId, eventType, timestamp, data, createdAt: isEdit ? (await dbGet('events', eventId))?.createdAt || new Date().toISOString() : new Date().toISOString() };
+      await dbPut('events', ev);
+      break;
     }
   }
-}
 
-async function renderSymptomsTab() {
-  const symptoms = (await dbGetAll('symptoms')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-  let html = '';
-
-  if (symptoms.length === 0) {
-    html += `<div class="empty-state">
-      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></div>
-      <div class="empty-title">暂无症状记录</div>
-      <div class="empty-desc">记录宝贝的症状变化</div>
-    </div>`;
-  } else {
-    // Timeline view
-    html += '<div class="timeline">';
-    symptoms.forEach(s => {
-      const ended = !!s.endDate;
-      const stars = '★'.repeat(s.severity) + '☆'.repeat(5 - s.severity);
-      html += `<div class="timeline-item ${ended?'ended':''}" onclick="openSymptomForm('${s.id}')">
-        <div class="timeline-date">${formatDate(s.startDate)} ${s.endDate ? '→ ' + formatDate(s.endDate) : '进行中'}</div>
-        <div class="timeline-title">${s.name}</div>
-        <div class="timeline-desc"><span style="color:var(--primary)">${stars}</span> ${s.notes||''}</div>
-      </div>`;
-    });
-    html += '</div>';
+  // Update illness updatedAt
+  const ill = await dbGet('illnesses', illnessId);
+  if (ill) {
+    ill.updatedAt = new Date().toISOString();
+    await dbPut('illnesses', ill);
   }
 
-  html += `<button class="fab" onclick="openSymptomForm()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>`;
-
-  return html;
+  closeFullModal();
+  showToast('已保存');
+  renderIllnessDetail(illnessId);
 }
 
-async function renderTemperatureTab() {
-  const temps = (await dbGetAll('temperatures')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-  let html = '';
-
-  html += `<div style="padding:0 16px 16px">
-    <button class="btn btn-primary btn-block" onclick="openTempForm()">🌡️ 记录体温</button>
-  </div>`;
-
-  if (temps.length > 1) {
-    html += `<div class="temp-chart-container"><canvas id="temp-chart-track" class="temp-chart"></canvas></div>`;
-  }
-
-  if (temps.length === 0) {
-    html += `<div class="empty-state" style="padding:40px 30px">
-      <div class="empty-desc">暂无体温记录</div>
-    </div>`;
-  } else {
-    temps.forEach(t => {
-      const isFever = t.value >= 37.3;
-      const cls = isFever ? 'tag-warning' : 'tag-success';
-      html += `<div class="card" onclick="openTempForm('${t.id}')">
-        <div class="card-header">
-          <div class="card-title" style="font-size:24px;font-weight:700;color:${isFever?'var(--danger)':'var(--success)'}">${t.value}°C</div>
-          <span class="tag ${cls}">${isFever?'发热':'正常'}</span>
-        </div>
-        <div class="card-meta">${formatDatetime(t.date)} ${t.notes||''}</div>
-      </div>`;
-    });
-  }
-
-  return html;
-}
-
-async function renderMedicationsTab() {
-  const meds = (await dbGetAll('medications')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-  let html = '';
-
-  if (meds.length === 0) {
-    html += `<div class="empty-state">
-      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg></div>
-      <div class="empty-title">暂无用药记录</div>
-      <div class="empty-desc">记录宝贝的用药情况</div>
-    </div>`;
-  } else {
-    meds.forEach(m => {
-      const isActive = m.status === '进行中';
-      html += `<div class="card" onclick="openMedForm('${m.id}')">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${m.name}</div>
-            <div class="card-meta">${m.dosage} · ${m.frequency}</div>
-          </div>
-          <span class="card-badge ${isActive?'green':'gray'}">${m.status}</span>
-        </div>
-        <div class="card-meta">${formatDate(m.startDate)} ${m.endDate ? '→ '+formatDate(m.endDate) : '→ 至今'}</div>
-        ${m.sideEffects ? `<div class="card-meta" style="color:var(--warning)">不良反应: ${m.sideEffects}</div>` : ''}
-      </div>`;
-    });
-  }
-
-  html += `<button class="fab" onclick="openMedForm()">
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-  </button>`;
-
-  return html;
-}
-
+// ==================== Vaccine Page ====================
 const VACCINE_PRESETS = ['乙肝疫苗','卡介苗','脊灰疫苗','百白破','麻腮风','乙脑疫苗','流脑疫苗','甲肝疫苗','水痘疫苗','肺炎疫苗','轮状病毒疫苗','流感疫苗','EV71手足口','五联疫苗','Hib疫苗'];
 
-async function renderVaccinesTab() {
+async function renderVaccines() {
+  const el = document.getElementById('page-vaccine');
   const vaccines = (await dbGetAll('vaccines')).sort((a,b) => b.createdAt.localeCompare(a.createdAt));
-  let html = '';
 
-  html += `<div style="padding:0 16px 12px"><div class="vaccine-presets">`;
+  let html = `
+  <div class="page-header">
+    <div class="page-title">💉 疫苗记录</div>
+    <div class="page-subtitle">共${vaccines.length}条记录</div>
+  </div>
+  <div style="padding:0 16px 12px"><div class="vaccine-presets">`;
   VACCINE_PRESETS.forEach(v => {
     html += `<button class="vaccine-preset" onclick="openVaccineForm('${v}')">${v}</button>`;
   });
@@ -1459,16 +1540,14 @@ async function renderVaccinesTab() {
     </div>`;
   } else {
     vaccines.forEach(v => {
-      html += `<div class="card" onclick="openVaccineForm(null,'${v.id}')">
-        <div class="card-header">
-          <div>
-            <div class="card-title">${v.name}</div>
-            <div class="card-meta">${formatDate(v.date)} · ${v.hospital||''}</div>
-          </div>
-          <span class="card-badge green">已接种</span>
+      html += `<div class="vaccine-card" onclick="openVaccineForm(null,'${v.id}')">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start">
+          <div class="vaccine-card-title">${v.name}</div>
+          <span class="status-tag recovered">已接种</span>
         </div>
-        ${v.batchNo ? `<div class="card-meta">批次: ${v.batchNo}</div>` : ''}
-        ${v.notes ? `<div class="card-meta">${v.notes}</div>` : ''}
+        <div class="vaccine-card-meta">${formatDate(v.date)} ${v.hospital?'· '+v.hospital:''}</div>
+        ${v.batchNo ? `<div class="vaccine-card-meta">批次: ${v.batchNo}</div>` : ''}
+        ${v.notes ? `<div class="vaccine-card-meta">${v.notes}</div>` : ''}
       </div>`;
     });
   }
@@ -1477,168 +1556,14 @@ async function renderVaccinesTab() {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
   </button>`;
 
-  return html;
+  el.innerHTML = html;
 }
 
-// ==================== Symptom Form ====================
-async function openSymptomForm(id) {
-  let s = id ? await dbGet('symptoms', id) : null;
-  if (!s) s = { id:genId(), name:'', startDate:formatDate(new Date()), endDate:'', severity:3, notes:'', visitId:'', createdAt:new Date().toISOString() };
-
-  const visits = await dbGetAll('visits');
-
-  let html = `
-  <div class="form-group"><label class="form-label">症状名称</label><input class="form-input" id="f-symptom-name" value="${s.name}" placeholder="如：发热、咳嗽、皮疹"></div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">开始时间</label><input type="date" class="form-input" id="f-symptom-start" value="${s.startDate}"></div>
-    <div class="form-group"><label class="form-label">结束时间</label><input type="date" class="form-input" id="f-symptom-end" value="${s.endDate||''}" placeholder="可选"></div>
-  </div>
-  <div class="form-group"><label class="form-label">严重程度</label>
-    <div class="severity-stars" id="severity-stars">
-      ${[1,2,3,4,5].map(i => `<button type="button" class="severity-star ${i<=s.severity?'active':''}" data-val="${i}" onclick="setSeverity(${i})"></button>`).join('')}
-    </div>
-    <div class="form-hint">1星最轻，5星最重</div>
-  </div>
-  <div class="form-group"><label class="form-label">备注</label><textarea class="form-input" id="f-symptom-notes" placeholder="补充说明">${s.notes}</textarea></div>`;
-
-  if (visits.length) {
-    html += `<div class="form-group"><label class="form-label">关联就诊记录</label><div class="select-wrapper">
-      <select class="form-select" id="f-symptom-visit">
-        <option value="">不关联</option>
-        ${visits.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(v=>`<option value="${v.id}" ${s.visitId===v.id?'selected':''}>${formatDate(v.date)} ${v.diagnosis||''}</option>`).join('')}
-      </select><span class="select-arrow">▾</span></div></div>`;
-  }
-
-  html += `<button class="btn btn-primary btn-block" onclick="saveSymptom('${s.id}')">保存症状</button>`;
-
-  openFullModal(id ? '编辑症状' : '记症状', html, 'symptoms', id);
-}
-
-function setSeverity(val) {
-  document.querySelectorAll('#severity-stars .severity-star').forEach(s => {
-    s.classList.toggle('active', parseInt(s.dataset.val) <= val);
-  });
-}
-
-async function saveSymptom(id) {
-  const name = document.getElementById('f-symptom-name').value.trim();
-  if (!name) { showToast('请输入症状名称'); return; }
-  const startDate = document.getElementById('f-symptom-start').value;
-  const endDate = document.getElementById('f-symptom-end').value;
-  const stars = document.querySelectorAll('#severity-stars .severity-star.active');
-  const severity = stars.length;
-  const notes = document.getElementById('f-symptom-notes').value.trim();
-  const visitId = document.getElementById('f-symptom-visit')?.value || '';
-
-  const existing = id ? await dbGet('symptoms', id) : null;
-  await dbPut('symptoms', { id, name, startDate, endDate, severity, notes, visitId, createdAt: existing ? existing.createdAt : new Date().toISOString() });
-  closeFullModal();
-  showToast('症状已保存');
-  renderPage(currentPage);
-}
-
-// ==================== Temperature Form ====================
-async function openTempForm(id) {
-  let t = id ? await dbGet('temperatures', id) : null;
-  if (!t) t = { id:genId(), value:36.5, date:new Date().toISOString().slice(0,16), notes:'', createdAt:new Date().toISOString() };
-
-  const now = new Date();
-  const defaultDate = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0') + 'T' + String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-
-  let html = `
-  <div class="temp-value-display ${t.value>=37.3?'temp-fever':t.value<36?'temp-low':'temp-normal'}" id="temp-display">${t.value}°C</div>
-  <div class="form-group"><label class="form-label">体温 (°C)</label><input type="number" class="form-input" id="f-temp-value" value="${t.value}" step="0.1" min="35" max="42" oninput="updateTempDisplay()"></div>
-  <div class="form-group"><label class="form-label">测量时间</label><input type="datetime-local" class="form-input" id="f-temp-date" value="${t.date || defaultDate}"></div>
-  <div class="form-group"><label class="form-label">备注</label><input class="form-input" id="f-temp-notes" value="${t.notes||''}" placeholder="如：腋下测量"></div>
-  <button class="btn btn-primary btn-block" onclick="saveTemp('${t.id}')">保存体温</button>`;
-
-  openFullModal(id ? '编辑体温' : '记录体温', html, 'temperatures', id);
-}
-
-function updateTempDisplay() {
-  const val = parseFloat(document.getElementById('f-temp-value').value) || 36.5;
-  const disp = document.getElementById('temp-display');
-  disp.textContent = val + '°C';
-  disp.className = 'temp-value-display ' + (val >= 37.3 ? 'temp-fever' : val < 36 ? 'temp-low' : 'temp-normal');
-}
-
-async function saveTemp(id) {
-  const value = parseFloat(document.getElementById('f-temp-value').value);
-  if (isNaN(value) || value < 35 || value > 42) { showToast('请输入有效体温'); return; }
-  const date = document.getElementById('f-temp-date').value;
-  const notes = document.getElementById('f-temp-notes').value.trim();
-
-  const existing = id ? await dbGet('temperatures', id) : null;
-  await dbPut('temperatures', { id, value, date, notes, createdAt: existing ? existing.createdAt : new Date().toISOString() });
-  closeFullModal();
-  showToast('体温已保存');
-  renderPage(currentPage);
-}
-
-// ==================== Medication Form ====================
-async function openMedForm(id) {
-  let m = id ? await dbGet('medications', id) : null;
-  if (!m) m = { id:genId(), name:'', dosage:'', frequency:'', startDate:formatDate(new Date()), endDate:'', status:'进行中', sideEffects:'', visitId:'', createdAt:new Date().toISOString() };
-
-  const visits = await dbGetAll('visits');
-
-  let html = `
-  <div class="form-group"><label class="form-label">药品名称</label><input class="form-input" id="f-med-name" value="${m.name}" placeholder="药品名称"></div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">剂量</label><input class="form-input" id="f-med-dosage" value="${m.dosage}" placeholder="如：5ml/次"></div>
-    <div class="form-group"><label class="form-label">频次</label><input class="form-input" id="f-med-frequency" value="${m.frequency}" placeholder="如：一日三次"></div>
-  </div>
-  <div class="form-row">
-    <div class="form-group"><label class="form-label">开始日期</label><input type="date" class="form-input" id="f-med-start" value="${m.startDate}"></div>
-    <div class="form-group"><label class="form-label">结束日期</label><input type="date" class="form-input" id="f-med-end" value="${m.endDate||''}"></div>
-  </div>
-  <div class="form-group"><label class="form-label">用药状态</label>
-    <div class="select-wrapper">
-      <select class="form-select" id="f-med-status">
-        <option value="进行中" ${m.status==='进行中'?'selected':''}>进行中</option>
-        <option value="已停药" ${m.status==='已停药'?'selected':''}>已停药</option>
-      </select><span class="select-arrow">▾</span>
-    </div>
-  </div>
-  <div class="form-group"><label class="form-label">不良反应</label><input class="form-input" id="f-med-side" value="${m.sideEffects}" placeholder="如有不良反应请记录"></div>`;
-
-  if (visits.length) {
-    html += `<div class="form-group"><label class="form-label">关联就诊记录</label><div class="select-wrapper">
-      <select class="form-select" id="f-med-visit">
-        <option value="">不关联</option>
-        ${visits.sort((a,b)=>b.createdAt.localeCompare(a.createdAt)).map(v=>`<option value="${v.id}" ${m.visitId===v.id?'selected':''}>${formatDate(v.date)} ${v.diagnosis||''}</option>`).join('')}
-      </select><span class="select-arrow">▾</span></div></div>`;
-  }
-
-  html += `<button class="btn btn-primary btn-block" onclick="saveMed('${m.id}')">保存用药记录</button>`;
-
-  openFullModal(id ? '编辑用药' : '记用药', html, 'medications', id);
-}
-
-async function saveMed(id) {
-  const name = document.getElementById('f-med-name').value.trim();
-  if (!name) { showToast('请输入药品名称'); return; }
-  const dosage = document.getElementById('f-med-dosage').value.trim();
-  const frequency = document.getElementById('f-med-frequency').value.trim();
-  const startDate = document.getElementById('f-med-start').value;
-  const endDate = document.getElementById('f-med-end').value;
-  const status = document.getElementById('f-med-status').value;
-  const sideEffects = document.getElementById('f-med-side').value.trim();
-  const visitId = document.getElementById('f-med-visit')?.value || '';
-
-  const existing = id ? await dbGet('medications', id) : null;
-  await dbPut('medications', { id, name, dosage, frequency, startDate, endDate, status, sideEffects, visitId, createdAt: existing ? existing.createdAt : new Date().toISOString() });
-  closeFullModal();
-  showToast('用药记录已保存');
-  renderPage(currentPage);
-}
-
-// ==================== Vaccine Form ====================
 async function openVaccineForm(preset, id) {
   let v = id ? await dbGet('vaccines', id) : null;
-  if (!v) v = { id:genId(), name:preset||'', date:formatDate(new Date()), hospital:'', batchNo:'', notes:'', createdAt:new Date().toISOString() };
+  if (!v) v = { id:genId(), name:preset||'', date:todayISO(), hospital:'', batchNo:'', notes:'', createdAt:new Date().toISOString() };
 
-  let html = `
+  const html = `
   <div class="form-group"><label class="form-label">疫苗名称</label><input class="form-input" id="f-vaccine-name" value="${v.name}" placeholder="疫苗名称"></div>
   <div class="form-row">
     <div class="form-group"><label class="form-label">接种日期</label><input type="date" class="form-input" id="f-vaccine-date" value="${v.date}"></div>
@@ -1646,9 +1571,10 @@ async function openVaccineForm(preset, id) {
   </div>
   <div class="form-group"><label class="form-label">批次号</label><input class="form-input" id="f-vaccine-batch" value="${v.batchNo}" placeholder="可选"></div>
   <div class="form-group"><label class="form-label">备注</label><textarea class="form-input" id="f-vaccine-notes" placeholder="如接种后反应">${v.notes}</textarea></div>
+  ${id ? `<button class="btn btn-danger btn-block" onclick="deleteVaccine('${id}')" style="margin-bottom:12px">删除</button>` : ''}
   <button class="btn btn-primary btn-block" onclick="saveVaccine('${v.id}')">保存疫苗记录</button>`;
 
-  openFullModal(id ? '编辑疫苗' : '记疫苗', html, 'vaccines', id);
+  openFullModal(id ? '编辑疫苗' : '记疫苗', html, 'vaccine', id, null);
 }
 
 async function saveVaccine(id) {
@@ -1663,173 +1589,15 @@ async function saveVaccine(id) {
   await dbPut('vaccines', { id, name, date, hospital, batchNo, notes, createdAt: existing ? existing.createdAt : new Date().toISOString() });
   closeFullModal();
   showToast('疫苗记录已保存');
-  renderPage(currentPage);
+  renderVaccines();
 }
 
-// ==================== SEARCH ====================
-async function renderSearch() {
-  const el = document.getElementById('page-search');
-  const history = getSearchHistory();
-
-  let html = `
-  <div class="page-header">
-    <div class="page-title">搜索</div>
-    <div class="page-subtitle">搜索症状、诊断、检查、用药等记录</div>
-  </div>
-  <div class="search-bar">
-    <div class="search-input-wrap">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
-      <input type="text" class="search-input" id="search-input" placeholder="输入关键词搜索..." oninput="debounceSearch()" onkeydown="if(event.key==='Enter')doSearch()">
-    </div>
-    <button class="btn btn-primary btn-sm" onclick="doSearch()">搜索</button>
-  </div>`;
-
-  // Search history
-  if (history.length > 0) {
-    html += `<div class="search-history">
-      <div class="search-history-title"><span>搜索历史</span><button class="search-history-clear" onclick="clearSearchHistory()">清除</button></div>
-      <div class="history-tags">${history.map(h => `<button class="history-tag" onclick="searchKeyword('${h.replace(/'/g,"\\'")}')">${h}</button>`).join('')}</div>
-    </div>`;
-  }
-
-  html += `<div id="search-results"></div>`;
-  el.innerHTML = html;
-}
-
-function debounceSearch() {
-  clearTimeout(window._searchTimer);
-  window._searchTimer = setTimeout(() => doSearch(), 400);
-}
-
-async function doSearch() {
-  const keyword = document.getElementById('search-input').value.trim();
-  if (!keyword) { document.getElementById('search-results').innerHTML = ''; return; }
-
-  addSearchHistory(keyword);
-  const results = await searchAll(keyword);
-  renderSearchResults(results, keyword);
-}
-
-async function searchKeyword(kw) {
-  document.getElementById('search-input').value = kw;
-  await doSearch();
-}
-
-async function searchAll(keyword) {
-  const kw = keyword.toLowerCase();
-  const results = [];
-
-  // Search visits
-  const visits = await dbGetAll('visits');
-  visits.forEach(v => {
-    const fields = [v.diagnosis, v.notes, v.hospital, ...(v.symptoms||[])].filter(Boolean).join(' ').toLowerCase();
-    if (fields.includes(kw)) {
-      results.push({ type:'visit', id:v.id, title:v.diagnosis||'就诊记录', meta:`${formatDate(v.date)} ${v.hospital||''}`, icon:'visit', data:v });
-    }
-  });
-
-  // Search checkups
-  const checkups = await dbGetAll('checkups');
-  checkups.forEach(c => {
-    const fields = [c.type, c.details, c.hospital].filter(Boolean).join(' ').toLowerCase();
-    if (fields.includes(kw)) {
-      results.push({ type:'checkup', id:c.id, title:c.type, meta:`${formatDate(c.date)} ${c.hospital||''}`, icon:'checkup', data:c });
-    }
-  });
-
-  // Search medications
-  const meds = await dbGetAll('medications');
-  meds.forEach(m => {
-    const fields = [m.name, m.dosage, m.frequency, m.sideEffects].filter(Boolean).join(' ').toLowerCase();
-    if (fields.includes(kw)) {
-      results.push({ type:'medication', id:m.id, title:m.name, meta:`${m.dosage} · ${m.frequency}`, icon:'med', data:m });
-    }
-  });
-
-  // Search vaccines
-  const vaccines = await dbGetAll('vaccines');
-  vaccines.forEach(v => {
-    const fields = [v.name, v.hospital, v.notes].filter(Boolean).join(' ').toLowerCase();
-    if (fields.includes(kw)) {
-      results.push({ type:'vaccine', id:v.id, title:v.name, meta:`${formatDate(v.date)}`, icon:'vaccine', data:v });
-    }
-  });
-
-  // Search symptoms
-  const symptoms = await dbGetAll('symptoms');
-  symptoms.forEach(s => {
-    const fields = [s.name, s.notes].filter(Boolean).join(' ').toLowerCase();
-    if (fields.includes(kw)) {
-      results.push({ type:'symptom', id:s.id, title:s.name, meta:`${formatDate(s.startDate)} 严重度${'★'.repeat(s.severity)}`, icon:'symptom', data:s });
-    }
-  });
-
-  return results;
-}
-
-function renderSearchResults(results, keyword) {
-  const container = document.getElementById('search-results');
-  if (!results.length) {
-    container.innerHTML = `<div class="empty-state" style="padding:40px"><div class="empty-desc">未找到相关记录</div></div>`;
-    return;
-  }
-
-  // Group by type
-  const groups = {};
-  const typeLabels = { visit:'就诊记录', checkup:'检查报告', medication:'用药记录', vaccine:'疫苗记录', symptom:'症状' };
-  const typeIcons = {
-    visit:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 012 2v14a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>',
-    checkup:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><path d="M14 2v6h6"/></svg>',
-    med:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 8v8M8 12h8"/></svg>',
-    vaccine:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>',
-    symptom:'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg>'
-  };
-
-  results.forEach(r => {
-    if (!groups[r.type]) groups[r.type] = [];
-    groups[r.type].push(r);
-  });
-
-  let html = '';
-  for (const type in groups) {
-    html += `<div class="search-section">
-      <div class="search-section-title">${typeLabels[type]||type} (${groups[type].length})</div>`;
-    groups[type].forEach(r => {
-      const highlightedTitle = highlightText(r.title, keyword);
-      const highlightedMeta = highlightText(r.meta, keyword);
-      html += `<div class="search-result-item" onclick="openSearchResult('${r.type}','${r.id}')">
-        <div class="search-result-icon ${r.icon}">${typeIcons[r.icon]||''}</div>
-        <div class="search-result-content">
-          <div class="search-result-title">${highlightedTitle}</div>
-          <div class="search-result-meta">${highlightedMeta}</div>
-        </div>
-      </div>`;
-    });
-    html += '</div>';
-  }
-
-  container.innerHTML = html;
-}
-
-function highlightText(text, keyword) {
-  if (!keyword) return text;
-  const regex = new RegExp(`(${keyword.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi');
-  return text.replace(regex, '<span class="search-highlight">$1</span>');
-}
-
-async function openSearchResult(type, id) {
-  switch(type) {
-    case 'visit': openVisitForm(id); break;
-    case 'checkup': openCheckupForm(id); break;
-    case 'medication': openMedForm(id); break;
-    case 'vaccine': openVaccineForm(null, id); break;
-    case 'symptom': openSymptomForm(id); break;
-  }
-}
-
-function clearSearchHistory() {
-  localStorage.removeItem('child_health_search_history');
-  renderSearch();
+async function deleteVaccine(id) {
+  if (!confirm('确定删除此疫苗记录？')) return;
+  await dbDelete('vaccines', id);
+  closeFullModal();
+  showToast('已删除');
+  renderVaccines();
 }
 
 // ==================== Config Modal ====================
@@ -1847,7 +1615,7 @@ function showConfigModal() {
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
   </div>`;
 
-  openFullModal('设置', html, null, null);
+  openFullModal('设置', html, null, null, null);
 }
 
 function saveConfigModal() {
@@ -1861,8 +1629,9 @@ function saveConfigModal() {
 }
 
 async function exportData() {
+  const stores = ['illnesses','events','photos','vaccines'];
   const data = {};
-  for (const store of STORES) {
+  for (const store of stores) {
     data[store] = await dbGetAll(store);
   }
   data.config = getConfig();
@@ -1884,7 +1653,17 @@ async function importData(e) {
   try {
     const text = await file.text();
     const data = JSON.parse(text);
-    for (const store of STORES) {
+    const stores = ['illnesses','events','photos','vaccines'];
+    for (const store of stores) {
+      if (data[store] && Array.isArray(data[store])) {
+        for (const item of data[store]) {
+          await dbPut(store, item);
+        }
+      }
+    }
+    // Also try importing from old format
+    const oldStores = ['visits','symptoms','temperatures','checkups','medications'];
+    for (const store of oldStores) {
       if (data[store] && Array.isArray(data[store])) {
         for (const item of data[store]) {
           await dbPut(store, item);
@@ -1917,7 +1696,7 @@ if ('serviceWorker' in navigator) {
 const manifest = {
   name: '童病记 - 儿童生病治疗记录',
   short_name: '童病记',
-  description: '记录孩子生病治疗，就诊、症状、检查、用药、疫苗',
+  description: '以病程为核心的儿童健康记录工具',
   start_url: location.href,
   display: 'standalone',
   background_color: '#ffffff',

@@ -1,0 +1,1569 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#2ba8a0">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔤</text></svg>">
+  <meta name="description" content="4岁+英语启蒙学习追踪工具，词汇本、分级阅读、高频词、学习日志一站式管理">
+  <title>英语启蒙记</title>
+  <style>
+:root {
+  --primary: #2ba8a0;
+  --primary-light: #3fc4bb;
+  --primary-dark: #1f8a83;
+  --primary-bg: #e8f6f5;
+  --bg: #ffffff;
+  --bg-secondary: #f8f9fa;
+  --border: #e9ecef;
+  --text: #212529;
+  --text-secondary: #6c757d;
+  --text-light: #adb5bd;
+  --danger: #dc3545;
+  --warning: #f0ad4e;
+  --success: #28a745;
+  --level1: #ffc107;
+  --level2: #2ba8a0;
+  --level3: #28a745;
+  --shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --radius: 12px;
+  --radius-sm: 8px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+
+html, body { height:100%; overflow:hidden; touch-action:manipulation; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+.app-container { display:flex; flex-direction:column; height:100vh; height:100dvh; }
+
+.page-content {
+  flex:1; min-height:0; -webkit-overflow-scrolling:touch;
+  overflow-y:auto; overflow-x:hidden;
+  padding-bottom: calc(70px + var(--safe-bottom));
+  background: var(--bg);
+}
+
+.page-header { padding:20px 20px 16px; background:var(--bg); position:sticky; top:0; z-index:10; }
+.page-title { font-size:28px; font-weight:700; letter-spacing:-0.5px; }
+.page-subtitle { font-size:14px; color:var(--text-secondary); margin-top:4px; }
+
+/* 底部导航 */
+.bottom-nav {
+  position:fixed; bottom:0; left:0; right:0; display:flex;
+  background:var(--bg); border-top:1px solid var(--border);
+  padding-bottom:var(--safe-bottom); z-index:100;
+}
+.nav-item {
+  flex:1; display:flex; flex-direction:column; align-items:center;
+  padding:8px 0 6px; color:var(--text-light); cursor:pointer;
+  border:none; background:none; font-size:10px; transition:color 0.2s;
+}
+.nav-item.active { color:var(--primary); }
+.nav-item svg { width:24px; height:24px; margin-bottom:2px; }
+.nav-item span { font-weight:500; }
+
+/* 卡片 */
+.card {
+  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+  padding:16px; margin:0 16px 12px; transition:transform 0.15s;
+}
+.card:active { transform:scale(0.98); }
+.card-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:12px; }
+.card-title { font-size:17px; font-weight:600; }
+.card-badge {
+  font-size:12px; padding:4px 10px; border-radius:20px;
+  background:var(--primary); color:white; font-weight:500;
+}
+.card-meta { font-size:13px; color:var(--text-secondary); display:flex; align-items:center; gap:4px; }
+
+/* 按钮 */
+.btn {
+  display:inline-flex; align-items:center; justify-content:center; gap:6px;
+  padding:12px 20px; border-radius:var(--radius-sm); font-size:15px; font-weight:600;
+  border:none; cursor:pointer; transition:all 0.15s; min-height:48px; text-decoration:none;
+}
+.btn-primary { background:var(--primary); color:white; }
+.btn-primary:hover { background:var(--primary-dark); }
+.btn-primary:active { transform:scale(0.97); }
+.btn-secondary { background:var(--bg-secondary); color:var(--text); border:1px solid var(--border); }
+.btn-ghost { background:transparent; color:var(--primary); padding:8px 12px; min-height:auto; }
+.btn-danger { background:var(--danger); color:white; }
+.btn-block { width:100%; }
+.btn-sm { padding:8px 14px; font-size:13px; min-height:36px; }
+
+/* 输入框 */
+.form-group { margin-bottom:20px; }
+.form-label { display:block; font-size:14px; font-weight:600; margin-bottom:8px; }
+.form-input {
+  width:100%; padding:14px 16px; border:1px solid var(--border);
+  border-radius:var(--radius-sm); font-size:16px; background:var(--bg);
+  color:var(--text); transition:border-color 0.15s;
+}
+.form-input:focus { outline:none; border-color:var(--primary); }
+.form-input::placeholder { color:var(--text-light); }
+.form-select {
+  width:100%; padding:14px 40px 14px 16px; border:1px solid var(--border);
+  border-radius:var(--radius-sm); font-size:16px; background:var(--bg);
+  color:var(--text); appearance:none; cursor:pointer;
+}
+.form-select:focus { outline:none; border-color:var(--primary); }
+
+/* 过滤器 */
+.filter-bar { display:flex; gap:8px; padding:0 16px 16px; overflow-x:auto; -webkit-overflow-scrolling:touch; }
+.filter-chip {
+  padding:8px 16px; border-radius:20px; font-size:13px; font-weight:500;
+  white-space:nowrap; border:1px solid var(--border); background:var(--bg);
+  color:var(--text-secondary); cursor:pointer; transition:all 0.15s;
+}
+.filter-chip.active { background:var(--primary); border-color:var(--primary); color:white; }
+
+/* 模态框 */
+.modal-overlay {
+  position:fixed; inset:0; background:rgba(0,0,0,0.5); display:flex;
+  align-items:flex-end; justify-content:center; z-index:200;
+  opacity:0; visibility:hidden; transition:all 0.25s;
+}
+.modal-overlay.show { opacity:1; visibility:visible; }
+.modal {
+  background:var(--bg); border-radius:var(--radius) var(--radius) 0 0;
+  width:100%; max-width:500px; max-height:90vh; overflow-y:auto;
+  transform:translateY(100%); transition:transform 0.25s ease-out;
+}
+.modal-overlay.show .modal { transform:translateY(0); }
+.modal-header {
+  display:flex; align-items:center; justify-content:space-between;
+  padding:18px 20px; border-bottom:1px solid var(--border);
+  position:sticky; top:0; background:var(--bg); z-index:1;
+}
+.modal-title { font-size:18px; font-weight:600; }
+.modal-close {
+  width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+  border:none; background:none; color:var(--text-secondary); cursor:pointer; border-radius:50%;
+}
+.modal-close:active { background:var(--bg-secondary); }
+.modal-body { padding:20px; }
+.modal-footer { padding:16px 20px; padding-bottom:calc(16px + var(--safe-bottom)); border-top:1px solid var(--border); display:flex; gap:12px; }
+.modal-footer .btn { flex:1; }
+
+/* Toast */
+.toast {
+  position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(100px);
+  background:var(--text); color:white; padding:14px 24px; border-radius:var(--radius);
+  font-size:14px; font-weight:500; z-index:300; opacity:0; transition:all 0.3s;
+  max-width:calc(100% - 40px); text-align:center;
+}
+.toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
+.toast.success { background:var(--success); }
+.toast.error { background:var(--danger); }
+
+/* 空状态 */
+.empty-state { display:flex; flex-direction:column; align-items:center; justify-content:center; padding:60px 30px; text-align:center; }
+.empty-icon { width:64px; height:64px; margin-bottom:16px; color:var(--text-light); }
+.empty-title { font-size:18px; font-weight:600; margin-bottom:8px; }
+.empty-desc { font-size:14px; color:var(--text-secondary); margin-bottom:24px; }
+
+/* 页面切换 */
+.page { display:none; }
+.page.active { display:flex; flex-direction:column; flex:1; overflow:hidden; }
+
+/* 统计卡片 */
+.stat-grid { display:grid; grid-template-columns:1fr 1fr; gap:10px; padding:0 16px 12px; }
+.stat-card {
+  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+  padding:14px 16px;
+}
+.stat-label { font-size:12px; color:var(--text-secondary); margin-bottom:4px; }
+.stat-value { font-size:24px; font-weight:700; color:var(--primary); }
+.stat-value .unit { font-size:13px; font-weight:500; color:var(--text-secondary); margin-left:2px; }
+
+/* 进度条 */
+.progress-bar { height:8px; background:var(--border); border-radius:4px; overflow:hidden; margin-top:8px; }
+.progress-fill { height:100%; border-radius:4px; transition:width 0.5s ease; background:var(--primary); }
+.progress-fill.level1 { background:var(--level1); }
+.progress-fill.level2 { background:var(--level2); }
+.progress-fill.level3 { background:var(--level3); }
+
+/* 掌握级别标签 */
+.level-tag {
+  display:inline-flex; align-items:center; padding:3px 10px; border-radius:12px;
+  font-size:11px; font-weight:600;
+}
+.level-tag.l1 { background:#fff8e1; color:#f57f17; }
+.level-tag.l2 { background:var(--primary-bg); color:var(--primary-dark); }
+.level-tag.l3 { background:#d4edda; color:#155724; }
+
+/* 词汇列表 */
+.word-item {
+  display:flex; align-items:center; padding:14px 16px;
+  border-bottom:1px solid var(--border); cursor:pointer; transition:background 0.1s;
+}
+.word-item:active { background:var(--bg-secondary); }
+.word-item:last-child { border-bottom:none; }
+.word-main { flex:1; min-width:0; }
+.word-en { font-size:16px; font-weight:600; }
+.word-zh { font-size:13px; color:var(--text-secondary); margin-top:2px; }
+.word-theme { font-size:11px; color:var(--text-light); margin-top:2px; }
+.word-level { margin-left:12px; }
+
+/* 词汇统计 */
+.word-stats-bar {
+  display:flex; gap:0; margin:8px 0; border-radius:var(--radius-sm); overflow:hidden; height:10px;
+}
+.word-stats-seg { transition:width 0.5s ease; min-width:0; }
+
+/* 日历 */
+.calendar-grid {
+  display:grid; grid-template-columns:repeat(7, 1fr); gap:4px;
+  padding:0 16px; text-align:center;
+}
+.cal-header { font-size:11px; color:var(--text-light); font-weight:500; padding:4px 0; }
+.cal-day {
+  aspect-ratio:1; display:flex; align-items:center; justify-content:center;
+  font-size:13px; border-radius:50%; position:relative; color:var(--text-secondary);
+}
+.cal-day.today { font-weight:700; color:var(--primary); }
+.cal-day.has-log::after {
+  content:''; position:absolute; bottom:3px; left:50%; transform:translateX(-50%);
+  width:5px; height:5px; border-radius:50%; background:var(--primary);
+}
+.cal-day.other-month { color:var(--text-light); }
+
+/* 柱状图 */
+.bar-chart { display:flex; align-items:flex-end; gap:6px; height:100px; padding:0 4px; }
+.bar-col { flex:1; display:flex; flex-direction:column; align-items:center; gap:4px; }
+.bar-fill { width:100%; border-radius:4px 4px 0 0; background:var(--primary); transition:height 0.5s ease; min-height:2px; }
+.bar-label { font-size:10px; color:var(--text-secondary); }
+
+/* 阅读体系 */
+.system-card {
+  background:var(--bg); border:1px solid var(--border); border-radius:var(--radius);
+  margin:0 16px 12px; overflow:hidden;
+}
+.system-header {
+  padding:16px; display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer; transition:background 0.1s;
+}
+.system-header:active { background:var(--bg-secondary); }
+.system-name { font-size:16px; font-weight:600; }
+.system-progress { font-size:13px; color:var(--text-secondary); }
+.system-levels { padding:0 16px 16px; }
+.level-row {
+  display:flex; align-items:center; gap:10px; padding:10px 0;
+  border-bottom:1px solid var(--border);
+}
+.level-row:last-child { border-bottom:none; }
+.level-name { font-size:14px; font-weight:500; min-width:50px; }
+.level-books { flex:1; }
+.level-count { font-size:12px; color:var(--text-secondary); }
+
+/* Sight Words */
+.sw-group { margin:0 16px 16px; }
+.sw-group-title { font-size:15px; font-weight:600; margin-bottom:10px; display:flex; justify-content:space-between; align-items:center; }
+.sw-words { display:flex; flex-wrap:wrap; gap:8px; }
+.sw-word {
+  padding:6px 14px; border-radius:16px; font-size:14px; font-weight:500;
+  border:1px solid var(--border); background:var(--bg); cursor:pointer;
+  transition:all 0.15s; user-select:none;
+}
+.sw-word:active { transform:scale(0.95); }
+.sw-word.mastery-0 { background:var(--bg-secondary); color:var(--text-secondary); border-color:var(--border); }
+.sw-word.mastery-1 { background:#fff8e1; color:#f57f17; border-color:#ffe082; }
+.sw-word.mastery-2 { background:var(--primary-bg); color:var(--primary-dark); border-color:var(--primary-light); }
+
+/* 月度简报 */
+.report-card {
+  background:linear-gradient(135deg, #f8faf9 0%, #e8f6f5 100%);
+  border:1px solid #d4edda; border-radius:var(--radius);
+  padding:16px; margin:0 16px 12px;
+}
+.report-title { font-size:15px; font-weight:600; margin-bottom:8px; }
+.report-item { font-size:13px; color:var(--text-secondary); margin-bottom:4px; }
+.report-item strong { color:var(--text); }
+
+/* FAB */
+.fab {
+  position:fixed; bottom:calc(80px + var(--safe-bottom)); right:20px;
+  width:56px; height:56px; border-radius:50%; background:var(--primary);
+  color:white; border:none; cursor:pointer; display:flex; align-items:center;
+  justify-content:center; box-shadow:0 4px 16px rgba(43,168,160,0.35);
+  transition:all 0.15s; z-index:50;
+}
+.fab:active { transform:scale(0.9); }
+.fab svg { width:28px; height:28px; }
+
+/* 分段控制 */
+.segmented {
+  display:flex; background:var(--bg-secondary); border-radius:var(--radius-sm);
+  padding:3px; margin:0 16px 16px;
+}
+.seg-btn {
+  flex:1; padding:8px 0; text-align:center; font-size:13px; font-weight:500;
+  border:none; background:none; color:var(--text-secondary); cursor:pointer;
+  border-radius:6px; transition:all 0.2s;
+}
+.seg-btn.active { background:var(--bg); color:var(--text); box-shadow:0 1px 3px rgba(0,0,0,0.1); }
+
+/* 日志条目 */
+.log-entry {
+  display:flex; align-items:center; padding:12px 16px;
+  border-bottom:1px solid var(--border);
+}
+.log-type-icon {
+  width:36px; height:36px; border-radius:10px; background:var(--primary-bg);
+  display:flex; align-items:center; justify-content:center; margin-right:12px;
+  font-size:18px; flex-shrink:0;
+}
+.log-info { flex:1; min-width:0; }
+.log-type-name { font-size:14px; font-weight:500; }
+.log-note { font-size:12px; color:var(--text-secondary); margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.log-duration { font-size:15px; font-weight:600; color:var(--primary); margin-left:12px; }
+
+/* 词汇增长曲线 SVG */
+.growth-chart { width:100%; height:120px; margin:8px 0; }
+
+/* Section */
+.section { padding:0 0 8px; }
+.section-title { font-size:15px; font-weight:600; padding:16px 16px 10px; }
+
+/* 主题标签 */
+.theme-tag {
+  display:inline-flex; align-items:center; padding:3px 10px; border-radius:12px;
+  font-size:11px; font-weight:500; background:var(--bg-secondary); color:var(--text-secondary);
+}
+
+/* 删除确认 */
+.delete-btn { color:var(--danger); background:none; border:none; padding:8px; cursor:pointer; }
+
+input[type="number"] { -moz-appearance:textfield; }
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button { -webkit-appearance:none; margin:0; }
+
+.divider { height:1px; background:var(--border); margin:16px 0; }
+
+.back-btn {
+  display:inline-flex; align-items:center; gap:6px; color:var(--primary);
+  font-size:15px; font-weight:500; cursor:pointer; padding:8px 0; margin-bottom:8px;
+  background:none; border:none;
+}
+
+/* 日志类型图标映射 */
+.log-icon-song::before { content:'🎵'; }
+.log-icon-read::before { content:'📖'; }
+.log-icon-cartoon::before { content:'📺'; }
+.log-icon-flash::before { content:'🃏'; }
+.log-icon-talk::before { content:'💬'; }
+.log-icon-other::before { content:'📝'; }
+  </style>
+</head>
+<body>
+
+<div class="app-container">
+  <!-- 仪表盘页 -->
+  <div id="pageDashboard" class="page active">
+    <div class="page-content" id="dashboardContent"></div>
+  </div>
+
+  <!-- 词汇页 -->
+  <div id="pageWords" class="page">
+    <div class="page-content" id="wordsContent"></div>
+  </div>
+
+  <!-- 阅读页 -->
+  <div id="pageReading" class="page">
+    <div class="page-content" id="readingContent"></div>
+  </div>
+
+  <!-- 高频词页 -->
+  <div id="pageSightWords" class="page">
+    <div class="page-content" id="sightWordsContent"></div>
+  </div>
+
+  <!-- 日志页 -->
+  <div id="pageLog" class="page">
+    <div class="page-content" id="logContent"></div>
+  </div>
+
+  <!-- 底部导航 -->
+  <nav class="bottom-nav">
+    <button class="nav-item active" data-page="Dashboard">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+      <span>仪表盘</span>
+    </button>
+    <button class="nav-item" data-page="Words">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      <span>词汇</span>
+    </button>
+    <button class="nav-item" data-page="Reading">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+      <span>阅读</span>
+    </button>
+    <button class="nav-item" data-page="SightWords">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><text x="12" y="16" text-anchor="middle" font-size="10" font-weight="bold" fill="currentColor" stroke="none">A</text></svg>
+      <span>高频词</span>
+    </button>
+    <button class="nav-item" data-page="Log">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+      <span>日志</span>
+    </button>
+  </nav>
+</div>
+
+<!-- Toast -->
+<div id="toast" class="toast"></div>
+
+<!-- 词汇添加/编辑模态框 -->
+<div id="wordModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="wordModalTitle">添加单词</div>
+      <button class="modal-close" onclick="closeModal('wordModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">英文</label>
+        <input class="form-input" id="wordEn" placeholder="如 cat">
+      </div>
+      <div class="form-group">
+        <label class="form-label">中文释义</label>
+        <input class="form-input" id="wordZh" placeholder="如 猫">
+      </div>
+      <div class="form-group">
+        <label class="form-label">主题分类</label>
+        <select class="form-select" id="wordTheme"></select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">掌握程度</label>
+        <div class="segmented" id="wordLevelSeg">
+          <button class="seg-btn active" data-val="1">认识</button>
+          <button class="seg-btn" data-val="2">会说</button>
+          <button class="seg-btn" data-val="3">会用</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('wordModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveWord()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- 自定义主题模态框 -->
+<div id="themeModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">添加自定义主题</div>
+      <button class="modal-close" onclick="closeModal('themeModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">主题名称（中英文均可）</label>
+        <input class="form-input" id="newThemeName" placeholder="如 天气 Weather">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('themeModal')">取消</button>
+      <button class="btn btn-primary" onclick="addCustomTheme()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 阅读体系模态框 -->
+<div id="systemModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">添加阅读体系</div>
+      <button class="modal-close" onclick="closeModal('systemModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">体系名称</label>
+        <select class="form-select" id="systemPreset">
+          <option value="">自定义</option>
+          <option value="RAZ">RAZ</option>
+          <option value="牛津树 Oxford Reading Tree">牛津树 Oxford Reading Tree</option>
+          <option value="海尼曼">海尼曼</option>
+          <option value="培生">培生</option>
+          <option value="I Can Read">I Can Read</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">自定义名称（选择"自定义"时填写）</label>
+        <input class="form-input" id="systemCustomName" placeholder="如 大猫 Big Cat">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('systemModal')">取消</button>
+      <button class="btn btn-primary" onclick="addReadingSystem()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 级别添加模态框 -->
+<div id="levelModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">添加级别</div>
+      <button class="modal-close" onclick="closeModal('levelModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">级别名称</label>
+        <input class="form-input" id="levelName" placeholder="如 Level A、1级">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('levelModal')">取消</button>
+      <button class="btn btn-primary" onclick="addLevel()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 书目添加模态框 -->
+<div id="bookModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">添加书目</div>
+      <button class="modal-close" onclick="closeModal('bookModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">书名</label>
+        <input class="form-input" id="bookTitle" placeholder="如 The Cat in the Hat">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('bookModal')">取消</button>
+      <button class="btn btn-primary" onclick="addBook()">添加</button>
+    </div>
+  </div>
+</div>
+
+<!-- 日志添加模态框 -->
+<div id="logModal" class="modal-overlay">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title">记录学习</div>
+      <button class="modal-close" onclick="closeModal('logModal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">日期</label>
+        <input class="form-input" type="date" id="logDate">
+      </div>
+      <div class="form-group">
+        <label class="form-label">类型</label>
+        <select class="form-select" id="logType">
+          <option value="song">🎵 儿歌</option>
+          <option value="read">📖 共读</option>
+          <option value="cartoon">📺 动画</option>
+          <option value="flash">🃏 闪卡</option>
+          <option value="talk">💬 对话</option>
+          <option value="other">📝 其他</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">时长（分钟）</label>
+        <input class="form-input" type="number" id="logMinutes" placeholder="15" min="1">
+      </div>
+      <div class="form-group">
+        <label class="form-label">备注</label>
+        <input class="form-input" id="logNote" placeholder="选填，如读了哪本书">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('logModal')">取消</button>
+      <button class="btn btn-primary" onclick="saveLog()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// ============ 常量 ============
+const THEMES = ['动物 Animals','颜色 Colors','身体 Body','食物 Food','家庭 Family','数字 Numbers','衣物 Clothes','交通工具 Vehicles','水果 Fruits','动作 Actions'];
+const LOG_TYPES = { song:'🎵 儿歌', read:'📖 共读', cartoon:'📺 动画', flash:'🃏 闪卡', talk:'💬 对话', other:'📝 其他' };
+const LOG_ICONS = { song:'🎵', read:'📖', cartoon:'📺', flash:'🃏', talk:'💬', other:'📝' };
+
+const DOLCH_PREK = ['a','and','away','big','blue','can','come','down','find','for','funny','go','help','here','I','in','is','it','jump','little','look','make','me','my','not','one','play','red','run','said','see','the','three','to','two','up','we','where','yellow','you'];
+const DOLCH_K = ['all','am','are','at','ate','be','black','brown','but','came','did','do','eat','four','get','good','have','he','into','like','must','new','no','now','on','our','out','please','pretty','ran','ride','saw','say','she','so','soon','that','there','they','this','too','under','want','was','well','went','what','white','who','will','with','yes'];
+
+const LEVEL_LABELS = { 1:'认识', 2:'会说', 3:'会用' };
+const MASTERY_LABELS = { 0:'未学', 1:'认识', 2:'掌握' };
+
+// ============ 存储 ============
+const Storage = {
+  _key: 'english_tracker',
+
+  get() {
+    try {
+      const raw = localStorage.getItem(this._key);
+      if (!raw) return this._default();
+      const data = JSON.parse(raw);
+      // migration: ensure all fields
+      if (!data.sightWords) data.sightWords = this._default().sightWords;
+      if (!data.sightWords.prek) data.sightWords.prek = {};
+      if (!data.sightWords.k) data.sightWords.k = {};
+      if (!data.customThemes) data.customThemes = [];
+      if (!data.readingSystems) data.readingSystems = [];
+      if (!data.dailyLogs) data.dailyLogs = [];
+      if (!data.words) data.words = [];
+      return data;
+    } catch { return this._default(); }
+  },
+
+  _default() {
+    const sw = { prek: {}, k: {} };
+    DOLCH_PREK.forEach(w => sw.prek[w] = 0);
+    DOLCH_K.forEach(w => sw.k[w] = 0);
+    return { version: 1, words: [], customThemes: [], readingSystems: [], sightWords: sw, dailyLogs: [] };
+  },
+
+  save(data) {
+    localStorage.setItem(this._key, JSON.stringify(data));
+  },
+
+  uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+};
+
+// ============ App状态 ============
+const App = {
+  currentPage: 'Dashboard',
+  wordFilter: '全部',
+  editingWordId: null,
+  currentSystemId: null,
+  currentLevelId: null,
+  logCalendarMonth: null, // YYYY-MM
+};
+
+// ============ 页面切换 ============
+function showPage(page) {
+  App.currentPage = page;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page' + page).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.toggle('active', n.dataset.page === page));
+
+  // render
+  const renderers = { Dashboard: renderDashboard, Words: renderWords, Reading: renderReading, SightWords: renderSightWords, Log: renderLog };
+  if (renderers[page]) renderers[page]();
+}
+
+// ============ 模态框 ============
+function openModal(id) { document.getElementById(id).classList.add('show'); document.body.style.overflow='hidden'; }
+function closeModal(id) { document.getElementById(id).classList.remove('show'); document.body.style.overflow=''; }
+
+// ============ Toast ============
+function showToast(msg, type='success') {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = `toast ${type}`; t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============ 工具函数 ============
+function getLocalDateStr(d) {
+  d = d || new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+
+function getLocalMonthStr(d) {
+  d = d || new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+}
+
+function getWeekRange() {
+  const now = new Date();
+  const day = now.getDay() || 7; // Monday=1
+  const mon = new Date(now); mon.setDate(now.getDate() - day + 1); mon.setHours(0,0,0,0);
+  const sun = new Date(mon); sun.setDate(mon.getDate() + 6); sun.setHours(23,59,59,999);
+  return { start: mon, end: sun };
+}
+
+function getMonday(d) {
+  const date = new Date(d);
+  const day = date.getDay() || 7;
+  date.setDate(date.getDate() - day + 1);
+  date.setHours(0,0,0,0);
+  return date;
+}
+
+function speak(text) {
+  if (!window.speechSynthesis) return;
+  window.speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  u.lang = 'en-US'; u.rate = 0.8;
+  speechSynthesis.speak(u);
+}
+
+// ============ 仪表盘 ============
+function renderDashboard() {
+  const data = Storage.get();
+  const words = data.words;
+  const total = words.length;
+  const l1 = words.filter(w => w.level === 1).length;
+  const l2 = words.filter(w => w.level === 2).length;
+  const l3 = words.filter(w => w.level === 3).length;
+
+  // 阅读统计
+  const systems = data.readingSystems;
+  let totalBooks = 0, readBooks = 0;
+  systems.forEach(s => s.levels.forEach(l => {
+    totalBooks += l.books.length;
+    readBooks += l.books.filter(b => b.status === 'read').length;
+  }));
+
+  // Sight Words
+  const prekTotal = DOLCH_PREK.length;
+  const prekMastered = DOLCH_PREK.filter(w => (data.sightWords.prek[w] || 0) >= 2).length;
+  const kTotal = DOLCH_K.length;
+  const kMastered = DOLCH_K.filter(w => (data.sightWords.k[w] || 0) >= 2).length;
+
+  // 本周学习时长
+  const week = getWeekRange();
+  let weekMinutes = 0;
+  data.dailyLogs.forEach(log => {
+    const ld = new Date(log.date + 'T00:00:00');
+    if (ld >= week.start && ld <= week.end) {
+      log.entries.forEach(e => weekMinutes += (e.minutes || 0));
+    }
+  });
+
+  // 月度简报
+  const now = new Date();
+  const thisMonth = getLocalMonthStr(now);
+  let monthMinutes = 0, monthWordsAdded = 0;
+  data.dailyLogs.forEach(log => {
+    if (log.date.startsWith(thisMonth)) {
+      log.entries.forEach(e => monthMinutes += (e.minutes || 0));
+    }
+  });
+  monthWordsAdded = words.filter(w => w.createdAt && w.createdAt.startsWith(thisMonth)).length;
+  const monthReadBooks = readBooks; // simplified
+
+  // 增长曲线
+  const growthSvg = buildGrowthChart(words);
+
+  let html = `
+    <div class="page-header">
+      <div class="page-title">英语启蒙记</div>
+      <div class="page-subtitle">${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日</div>
+    </div>
+
+    <div class="stat-grid">
+      <div class="stat-card">
+        <div class="stat-label">词汇量</div>
+        <div class="stat-value">${total}<span class="unit">个</span></div>
+        <div style="display:flex;gap:8px;margin-top:6px;">
+          <span class="level-tag l1">认识 ${l1}</span>
+          <span class="level-tag l2">会说 ${l2}</span>
+          <span class="level-tag l3">会用 ${l3}</span>
+        </div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">本周学习</div>
+        <div class="stat-value">${weekMinutes}<span class="unit">分钟</span></div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:6px;">日均 ${weekMinutes > 0 ? Math.round(weekMinutes / 7) : 0} 分钟</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">阅读进度</div>
+        <div class="stat-value">${totalBooks > 0 ? Math.round(readBooks/totalBooks*100) : 0}<span class="unit">%</span></div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${totalBooks > 0 ? readBooks/totalBooks*100 : 0}%"></div></div>
+        <div style="font-size:11px;color:var(--text-secondary);margin-top:4px;">${readBooks} / ${totalBooks} 本</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">高频词掌握</div>
+        <div style="display:flex;justify-content:space-between;margin-top:4px;">
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:14px;font-weight:600;color:var(--primary);">${prekMastered}/${prekTotal}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">Pre-K</div>
+          </div>
+          <div style="text-align:center;flex:1;">
+            <div style="font-size:14px;font-weight:600;color:var(--primary);">${kMastered}/${kTotal}</div>
+            <div style="font-size:11px;color:var(--text-secondary);">K</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 词汇增长曲线 -->
+    <div class="section">
+      <div class="section-title">词汇增长</div>
+      <div style="padding:0 16px;">${growthSvg}</div>
+    </div>
+
+    <!-- 阅读体系概览 -->
+    ${systems.length > 0 ? `
+    <div class="section">
+      <div class="section-title">阅读体系</div>
+      ${systems.map(s => {
+        let tb = 0, rb = 0;
+        s.levels.forEach(l => { tb += l.books.length; rb += l.books.filter(b => b.status === 'read').length; });
+        const pct = tb > 0 ? Math.round(rb/tb*100) : 0;
+        return `<div class="card" style="margin:0 16px 10px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;">
+            <div style="font-size:15px;font-weight:600;">${s.name}</div>
+            <div style="font-size:13px;color:var(--text-secondary);">${rb}/${tb} 本</div>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('')}
+    </div>` : ''}
+
+    <!-- 月度简报 -->
+    <div class="section">
+      <div class="section-title">本月简报</div>
+      <div class="report-card">
+        <div class="report-title">📊 ${now.getFullYear()}年${now.getMonth()+1}月</div>
+        <div class="report-item">✅ 新增词汇 <strong>${monthWordsAdded}</strong> 个</div>
+        <div class="report-item">📖 已读书目 <strong>${monthReadBooks}</strong> 本</div>
+        <div class="report-item">⏱ 学习时长 <strong>${monthMinutes}</strong> 分钟（日均 ${monthMinutes > 0 ? Math.round(monthMinutes / new Date(now.getFullYear(), now.getMonth()+1, 0).getDate()) : 0} 分钟）</div>
+        <div class="report-item">🔤 Pre-K 高频词掌握 <strong>${prekMastered}/${prekTotal}</strong>，K 掌握 <strong>${kMastered}/${kTotal}</strong></div>
+      </div>
+    </div>
+  `;
+  document.getElementById('dashboardContent').innerHTML = html;
+}
+
+function buildGrowthChart(words) {
+  if (words.length === 0) {
+    return '<div style="text-align:center;padding:30px;color:var(--text-light);font-size:13px;">暂无词汇数据，添加第一个单词开始吧</div>';
+  }
+  // 按日期分组累计
+  const dateMap = {};
+  words.forEach(w => {
+    const d = w.createdAt ? w.createdAt.slice(0,10) : getLocalDateStr();
+    dateMap[d] = (dateMap[d] || 0) + 1;
+  });
+  const dates = Object.keys(dateMap).sort();
+  const cumData = [];
+  let cum = 0;
+  dates.forEach(d => { cum += dateMap[d]; cumData.push({ date: d, count: cum }); });
+
+  // 最近30天或全部
+  const last30 = cumData.slice(-30);
+  const maxVal = Math.max(...last30.map(d => d.count), 1);
+  const w = 300, h = 100, padL = 30, padR = 10, padT = 10, padB = 20;
+  const cw = w - padL - padR, ch = h - padT - padB;
+
+  let pathD = '';
+  last30.forEach((d, i) => {
+    const x = padL + (i / Math.max(last30.length - 1, 1)) * cw;
+    const y = padT + ch - (d.count / maxVal) * ch;
+    pathD += (i === 0 ? 'M' : 'L') + x.toFixed(1) + ',' + y.toFixed(1);
+  });
+
+  // fill area
+  const firstX = padL, lastX = padL + cw;
+  const areaD = pathD + `L${lastX},${padT+ch}L${firstX},${padT+ch}Z`;
+
+  return `<svg class="growth-chart" viewBox="0 0 ${w} ${h}" preserveAspectRatio="xMidYMid meet">
+    <path d="${areaD}" fill="var(--primary-bg)" stroke="none"/>
+    <path d="${pathD}" fill="none" stroke="var(--primary)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+    ${last30.length > 0 ? `<text x="${padL}" y="${padT+ch+14}" fill="var(--text-light)" font-size="9">${last30[0].date.slice(5)}</text>` : ''}
+    ${last30.length > 1 ? `<text x="${lastX}" y="${padT+ch+14}" fill="var(--text-light)" font-size="9" text-anchor="end">${last30[last30.length-1].date.slice(5)}</text>` : ''}
+    <text x="${padL-4}" y="${padT+4}" fill="var(--text-light)" font-size="9" text-anchor="end">${maxVal}</text>
+    <text x="${padL-4}" y="${padT+ch+4}" fill="var(--text-light)" font-size="9" text-anchor="end">0</text>
+  </svg>`;
+}
+
+// ============ 词汇本 ============
+function getAllThemes() {
+  const data = Storage.get();
+  return [...THEMES, ...data.customThemes];
+}
+
+function renderWords() {
+  const data = Storage.get();
+  const allThemes = getAllThemes();
+  const filter = App.wordFilter;
+  const words = filter === '全部' ? data.words : data.words.filter(w => w.theme === filter);
+
+  // 统计
+  const total = words.length;
+  const l1 = words.filter(w => w.level===1).length;
+  const l2 = words.filter(w => w.level===2).length;
+  const l3 = words.filter(w => w.level===3).length;
+
+  let html = `
+    <div class="page-header">
+      <div class="page-title">词汇本</div>
+      <div class="page-subtitle">共 ${data.words.length} 个单词</div>
+    </div>
+
+    <!-- 主题过滤 -->
+    <div class="filter-bar">
+      <button class="filter-chip ${filter==='全部'?'active':''}" onclick="setWordFilter('全部')">全部</button>
+      ${allThemes.map(t => `<button class="filter-chip ${filter===t?'active':''}" onclick="setWordFilter('${t.replace(/'/g,"\\'")}')">${t}</button>`).join('')}
+      <button class="filter-chip" onclick="openModal('themeModal')" style="border-style:dashed;">+主题</button>
+    </div>
+
+    <!-- 统计 -->
+    <div style="padding:0 16px 12px;">
+      <div style="display:flex;justify-content:space-between;font-size:13px;color:var(--text-secondary);margin-bottom:4px;">
+        <span>当前筛选 ${total} 词</span>
+        <span>认识${l1} · 会说${l2} · 会用${l3}</span>
+      </div>
+      <div class="word-stats-bar">
+        ${total > 0 ? `<div class="word-stats-seg" style="width:${l1/total*100}%;background:var(--level1);"></div>` : ''}
+        ${total > 0 ? `<div class="word-stats-seg" style="width:${l2/total*100}%;background:var(--level2);"></div>` : ''}
+        ${total > 0 ? `<div class="word-stats-seg" style="width:${l3/total*100}%;background:var(--level3);"></div>` : ''}
+      </div>
+    </div>
+
+    <!-- 词汇列表 -->
+    ${words.length === 0 ? `
+    <div class="empty-state">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg></div>
+      <div class="empty-title">还没有单词</div>
+      <div class="empty-desc">点击右下角 + 添加第一个单词</div>
+    </div>` : `
+    <div style="margin:0 16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      ${words.map(w => `
+      <div class="word-item" onclick="editWord('${w.id}')">
+        <div class="word-main">
+          <div class="word-en">${w.en}</div>
+          <div class="word-zh">${w.zh}</div>
+          <div class="word-theme">${w.theme}</div>
+        </div>
+        <div class="word-level">
+          <span class="level-tag l${w.level}">${LEVEL_LABELS[w.level]}</span>
+        </div>
+      </div>`).join('')}
+    </div>`}
+  `;
+
+  // FAB
+  html += `<button class="fab" onclick="openAddWord()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`;
+
+  document.getElementById('wordsContent').innerHTML = html;
+}
+
+function setWordFilter(f) { App.wordFilter = f; renderWords(); }
+
+function openAddWord() {
+  App.editingWordId = null;
+  document.getElementById('wordModalTitle').textContent = '添加单词';
+  document.getElementById('wordEn').value = '';
+  document.getElementById('wordZh').value = '';
+  populateThemeSelect();
+  setLevelSeg(1);
+  openModal('wordModal');
+}
+
+function editWord(id) {
+  const data = Storage.get();
+  const w = data.words.find(w => w.id === id);
+  if (!w) return;
+  App.editingWordId = id;
+  document.getElementById('wordModalTitle').textContent = '编辑单词';
+  document.getElementById('wordEn').value = w.en;
+  document.getElementById('wordZh').value = w.zh;
+  populateThemeSelect(w.theme);
+  setLevelSeg(w.level);
+  openModal('wordModal');
+}
+
+function populateThemeSelect(selected) {
+  const sel = document.getElementById('wordTheme');
+  sel.innerHTML = getAllThemes().map(t => `<option value="${t}" ${t===selected?'selected':''}>${t}</option>`).join('');
+}
+
+function setLevelSeg(val) {
+  document.querySelectorAll('#wordLevelSeg .seg-btn').forEach(b => {
+    b.classList.toggle('active', parseInt(b.dataset.val) === val);
+  });
+}
+
+function saveWord() {
+  const en = document.getElementById('wordEn').value.trim();
+  const zh = document.getElementById('wordZh').value.trim();
+  const theme = document.getElementById('wordTheme').value;
+  const level = parseInt(document.querySelector('#wordLevelSeg .seg-btn.active')?.dataset.val || '1');
+
+  if (!en || !zh) { showToast('请填写英文和中文', 'error'); return; }
+
+  const data = Storage.get();
+  if (App.editingWordId) {
+    const w = data.words.find(w => w.id === App.editingWordId);
+    if (w) { w.en = en; w.zh = zh; w.theme = theme; w.level = level; w.updatedAt = getLocalDateStr(); }
+  } else {
+    data.words.push({ id: Storage.uid(), en, zh, theme, level, createdAt: getLocalDateStr(), updatedAt: getLocalDateStr() });
+  }
+  Storage.save(data);
+  closeModal('wordModal');
+  showToast(App.editingWordId ? '单词已更新' : '单词已添加');
+  renderWords();
+  App.editingWordId = null;
+}
+
+function addCustomTheme() {
+  const name = document.getElementById('newThemeName').value.trim();
+  if (!name) { showToast('请输入主题名称', 'error'); return; }
+  const data = Storage.get();
+  if ([...THEMES, ...data.customThemes].includes(name)) { showToast('主题已存在', 'error'); return; }
+  data.customThemes.push(name);
+  Storage.save(data);
+  closeModal('themeModal');
+  showToast('主题已添加');
+  document.getElementById('newThemeName').value = '';
+  renderWords();
+}
+
+// ============ 分级阅读 ============
+function renderReading() {
+  const data = Storage.get();
+  const systems = data.readingSystems;
+
+  let html = `
+    <div class="page-header">
+      <div class="page-title">分级阅读</div>
+      <div class="page-subtitle">${systems.length} 个体系</div>
+    </div>
+
+    ${systems.length === 0 ? `
+    <div class="empty-state">
+      <div class="empty-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg></div>
+      <div class="empty-title">还没有阅读体系</div>
+      <div class="empty-desc">添加一个分级阅读体系开始追踪</div>
+    </div>` : systems.map(s => renderSystemCard(s, data)).join('')}
+  `;
+
+  html += `<button class="fab" onclick="openModal('systemModal')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`;
+
+  document.getElementById('readingContent').innerHTML = html;
+}
+
+function renderSystemCard(system, data) {
+  let totalBooks = 0, readBooks = 0;
+  system.levels.forEach(l => { totalBooks += l.books.length; readBooks += l.books.filter(b => b.status === 'read').length; });
+  const pct = totalBooks > 0 ? Math.round(readBooks/totalBooks*100) : 0;
+
+  return `
+  <div class="system-card">
+    <div class="system-header" onclick="toggleSystemDetail('${system.id}')">
+      <div>
+        <div class="system-name">${system.name}</div>
+        <div style="font-size:12px;color:var(--text-secondary);margin-top:2px;">${system.levels.length} 个级别 · ${readBooks}/${totalBooks} 本已读</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;">
+        <span style="font-size:15px;font-weight:600;color:var(--primary);">${pct}%</span>
+        <button class="delete-btn" onclick="event.stopPropagation();deleteSystem('${system.id}')" title="删除">✕</button>
+      </div>
+    </div>
+    <div class="system-levels" id="sysDetail_${system.id}" style="display:none;">
+      ${system.levels.map(l => renderLevelRow(l, system.id, data)).join('')}
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="btn btn-sm btn-secondary" onclick="openAddLevel('${system.id}')">+ 添加级别</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderLevelRow(level, systemId, data) {
+  const total = level.books.length;
+  const read = level.books.filter(b => b.status === 'read').length;
+  const pct = total > 0 ? Math.round(read/total*100) : 0;
+
+  let booksHtml = '';
+  if (total > 0) {
+    booksHtml = level.books.map(b => {
+      const statusIcon = b.status === 'read' ? '✅' : b.status === 'reading' ? '📖' : '⬜';
+      return `<div style="display:flex;align-items:center;padding:6px 0;border-bottom:1px solid var(--border);gap:8px;">
+        <span onclick="cycleBookStatus('${systemId}','${level.id}','${b.id}')" style="cursor:pointer;">${statusIcon}</span>
+        <span style="flex:1;font-size:13px;">${b.title}</span>
+        <span style="font-size:11px;color:var(--text-light);">${b.status==='read'?'已读':b.status==='reading'?'在读':'未读'}</span>
+        <button class="delete-btn" onclick="deleteBook('${systemId}','${level.id}','${b.id}')" style="font-size:12px;padding:4px;">✕</button>
+      </div>`;
+    }).join('');
+  }
+
+  return `
+  <div style="padding:8px 0;border-bottom:1px solid var(--border);">
+    <div style="display:flex;justify-content:space-between;align-items:center;">
+      <div style="font-size:14px;font-weight:500;">${level.name}</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:12px;color:var(--text-secondary);">${read}/${total}</span>
+        <button class="delete-btn" onclick="deleteLevel('${systemId}','${level.id}')" style="font-size:12px;padding:4px;">✕</button>
+      </div>
+    </div>
+    <div class="progress-bar" style="margin-top:6px;"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div style="margin-top:6px;">
+      ${booksHtml}
+      <button class="btn btn-sm btn-ghost" onclick="openAddBook('${systemId}','${level.id}')" style="padding:4px 8px;font-size:12px;">+ 书目</button>
+    </div>
+  </div>`;
+}
+
+function toggleSystemDetail(id) {
+  const el = document.getElementById('sysDetail_' + id);
+  if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+function addReadingSystem() {
+  const preset = document.getElementById('systemPreset').value;
+  const custom = document.getElementById('systemCustomName').value.trim();
+  const name = preset || custom;
+  if (!name) { showToast('请输入体系名称', 'error'); return; }
+
+  const data = Storage.get();
+  data.readingSystems.push({ id: Storage.uid(), name, levels: [] });
+  Storage.save(data);
+  closeModal('systemModal');
+  showToast('体系已添加');
+  document.getElementById('systemPreset').value = '';
+  document.getElementById('systemCustomName').value = '';
+  renderReading();
+}
+
+function deleteSystem(id) {
+  if (!confirm('确定删除该阅读体系？')) return;
+  const data = Storage.get();
+  data.readingSystems = data.readingSystems.filter(s => s.id !== id);
+  Storage.save(data);
+  renderReading();
+  showToast('已删除');
+}
+
+function openAddLevel(systemId) {
+  App.currentSystemId = systemId;
+  document.getElementById('levelName').value = '';
+  openModal('levelModal');
+}
+
+function addLevel() {
+  const name = document.getElementById('levelName').value.trim();
+  if (!name) { showToast('请输入级别名称', 'error'); return; }
+  const data = Storage.get();
+  const sys = data.readingSystems.find(s => s.id === App.currentSystemId);
+  if (sys) { sys.levels.push({ id: Storage.uid(), name, books: [] }); Storage.save(data); }
+  closeModal('levelModal');
+  showToast('级别已添加');
+  renderReading();
+  // re-expand the detail
+  setTimeout(() => {
+    const el = document.getElementById('sysDetail_' + App.currentSystemId);
+    if (el) el.style.display = 'block';
+  }, 50);
+}
+
+function deleteLevel(systemId, levelId) {
+  if (!confirm('确定删除该级别？')) return;
+  const data = Storage.get();
+  const sys = data.readingSystems.find(s => s.id === systemId);
+  if (sys) { sys.levels = sys.levels.filter(l => l.id !== levelId); Storage.save(data); }
+  renderReading();
+  setTimeout(() => {
+    const el = document.getElementById('sysDetail_' + systemId);
+    if (el) el.style.display = 'block';
+  }, 50);
+}
+
+function openAddBook(systemId, levelId) {
+  App.currentSystemId = systemId;
+  App.currentLevelId = levelId;
+  document.getElementById('bookTitle').value = '';
+  openModal('bookModal');
+}
+
+function addBook() {
+  const title = document.getElementById('bookTitle').value.trim();
+  if (!title) { showToast('请输入书名', 'error'); return; }
+  const data = Storage.get();
+  const sys = data.readingSystems.find(s => s.id === App.currentSystemId);
+  if (sys) {
+    const lvl = sys.levels.find(l => l.id === App.currentLevelId);
+    if (lvl) { lvl.books.push({ id: Storage.uid(), title, status: 'unread' }); Storage.save(data); }
+  }
+  closeModal('bookModal');
+  showToast('书目已添加');
+  renderReading();
+  setTimeout(() => {
+    const el = document.getElementById('sysDetail_' + App.currentSystemId);
+    if (el) el.style.display = 'block';
+  }, 50);
+}
+
+function cycleBookStatus(systemId, levelId, bookId) {
+  const data = Storage.get();
+  const sys = data.readingSystems.find(s => s.id === systemId);
+  if (sys) {
+    const lvl = sys.levels.find(l => l.id === levelId);
+    if (lvl) {
+      const book = lvl.books.find(b => b.id === bookId);
+      if (book) {
+        const order = ['unread', 'reading', 'read'];
+        const idx = order.indexOf(book.status);
+        book.status = order[(idx + 1) % 3];
+        Storage.save(data);
+        renderReading();
+        setTimeout(() => {
+          const el = document.getElementById('sysDetail_' + systemId);
+          if (el) el.style.display = 'block';
+        }, 50);
+      }
+    }
+  }
+}
+
+function deleteBook(systemId, levelId, bookId) {
+  const data = Storage.get();
+  const sys = data.readingSystems.find(s => s.id === systemId);
+  if (sys) {
+    const lvl = sys.levels.find(l => l.id === levelId);
+    if (lvl) { lvl.books = lvl.books.filter(b => b.id !== bookId); Storage.save(data); }
+  }
+  renderReading();
+  setTimeout(() => {
+    const el = document.getElementById('sysDetail_' + systemId);
+    if (el) el.style.display = 'block';
+  }, 50);
+}
+
+// ============ Sight Words ============
+function renderSightWords() {
+  const data = Storage.get();
+
+  const prekTotal = DOLCH_PREK.length;
+  const prekKnown = DOLCH_PREK.filter(w => (data.sightWords.prek[w]||0) >= 1).length;
+  const prekMastered = DOLCH_PREK.filter(w => (data.sightWords.prek[w]||0) >= 2).length;
+
+  const kTotal = DOLCH_K.length;
+  const kKnown = DOLCH_K.filter(w => (data.sightWords.k[w]||0) >= 1).length;
+  const kMastered = DOLCH_K.filter(w => (data.sightWords.k[w]||0) >= 2).length;
+
+  let html = `
+    <div class="page-header">
+      <div class="page-title">高频词 Sight Words</div>
+      <div class="page-subtitle">Dolch 词表 · 点击单词发音</div>
+    </div>
+
+    <!-- Pre-K -->
+    <div class="sw-group">
+      <div class="sw-group-title">
+        <span>Pre-K（学前）</span>
+        <span style="font-size:13px;color:var(--text-secondary);">掌握 ${prekMastered}/${prekTotal} · 认识 ${prekKnown}/${prekTotal}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${prekMastered/prekTotal*100}%"></div></div>
+      <div style="font-size:11px;color:var(--text-light);margin:4px 0 10px;">掌握率 ${Math.round(prekMastered/prekTotal*100)}%</div>
+      <div class="sw-words">
+        ${DOLCH_PREK.map(w => `<span class="sw-word mastery-${data.sightWords.prek[w]||0}" onclick="handleSightWord('prek','${w}')">${w}</span>`).join('')}
+      </div>
+    </div>
+
+    <!-- K -->
+    <div class="sw-group">
+      <div class="sw-group-title">
+        <span>Kindergarten（幼儿园）</span>
+        <span style="font-size:13px;color:var(--text-secondary);">掌握 ${kMastered}/${kTotal} · 认识 ${kKnown}/${kTotal}</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${kMastered/kTotal*100}%"></div></div>
+      <div style="font-size:11px;color:var(--text-light);margin:4px 0 10px;">掌握率 ${Math.round(kMastered/kTotal*100)}%</div>
+      <div class="sw-words">
+        ${DOLCH_K.map(w => `<span class="sw-word mastery-${data.sightWords.k[w]||0}" onclick="handleSightWord('k','${w}')">${w}</span>`).join('')}
+      </div>
+    </div>
+
+    <div style="padding:16px;font-size:12px;color:var(--text-light);text-align:center;">
+      点击单词：发音 + 切换状态（未学→认识→掌握→未学）
+    </div>
+  `;
+
+  document.getElementById('sightWordsContent').innerHTML = html;
+}
+
+function handleSightWord(group, word) {
+  // 发音
+  speak(word);
+  // 切换掌握状态
+  const data = Storage.get();
+  const current = data.sightWords[group][word] || 0;
+  data.sightWords[group][word] = (current + 1) % 3;
+  Storage.save(data);
+  renderSightWords();
+}
+
+// ============ 学习日志 ============
+function renderLog() {
+  const data = Storage.get();
+  const now = new Date();
+  if (!App.logCalendarMonth) App.logCalendarMonth = getLocalMonthStr(now);
+
+  // 日历
+  const calHtml = renderCalendar(data, App.logCalendarMonth);
+
+  // 本周统计
+  const week = getWeekRange();
+  let weekMinutes = 0;
+  const weekDays = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(week.start);
+    d.setDate(d.getDate() + i);
+    const ds = getLocalDateStr(d);
+    const log = data.dailyLogs.find(l => l.date === ds);
+    let mins = 0;
+    if (log) log.entries.forEach(e => mins += (e.minutes||0));
+    weekMinutes += mins;
+    weekDays.push({ date: ds, minutes: mins, label: ['一','二','三','四','五','六','日'][i] });
+  }
+
+  // 柱状图
+  const maxMins = Math.max(...weekDays.map(d => d.minutes), 1);
+  const barHtml = weekDays.map(d => {
+    const h = Math.round(d.minutes / maxMins * 80);
+    const isToday = d.date === getLocalDateStr();
+    return `<div class="bar-col">
+      <div style="font-size:10px;color:var(--text-secondary);">${d.minutes}m</div>
+      <div class="bar-fill" style="height:${h}px;${isToday?'background:var(--primary-dark);':''}"></div>
+      <div class="bar-label" style="${isToday?'color:var(--primary);font-weight:600;':''}">${d.label}</div>
+    </div>`;
+  }).join('');
+
+  // 今日日志
+  const today = getLocalDateStr();
+  const todayLog = data.dailyLogs.find(l => l.date === today);
+  const todayEntries = todayLog ? todayLog.entries : [];
+
+  let html = `
+    <div class="page-header">
+      <div class="page-title">学习日志</div>
+      <div class="page-subtitle">本周 ${weekMinutes} 分钟 · 日均 ${Math.round(weekMinutes/7)} 分钟</div>
+    </div>
+
+    <!-- 日历 -->
+    <div class="section">
+      <div style="display:flex;justify-content:space-between;align-items:center;padding:0 16px 8px;">
+        <button class="btn btn-ghost btn-sm" onclick="changeCalMonth(-1)">◀</button>
+        <span style="font-size:15px;font-weight:600;">${formatCalTitle(App.logCalendarMonth)}</span>
+        <button class="btn btn-ghost btn-sm" onclick="changeCalMonth(1)">▶</button>
+      </div>
+      ${calHtml}
+    </div>
+
+    <!-- 近7天柱状图 -->
+    <div class="section">
+      <div class="section-title">近7天输入时长</div>
+      <div style="padding:0 16px;">
+        <div class="bar-chart">${barHtml}</div>
+      </div>
+    </div>
+
+    <!-- 今日记录 -->
+    <div class="section">
+      <div class="section-title">今日记录</div>
+      ${todayEntries.length === 0 ? `
+      <div style="padding:20px 16px;text-align:center;color:var(--text-light);font-size:13px;">今天还没有学习记录</div>` : `
+      <div style="margin:0 16px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+        ${todayEntries.map((e, i) => `
+        <div class="log-entry">
+          <div class="log-type-icon">${LOG_ICONS[e.type] || '📝'}</div>
+          <div class="log-info">
+            <div class="log-type-name">${LOG_TYPES[e.type] || e.type}</div>
+            ${e.note ? `<div class="log-note">${e.note}</div>` : ''}
+          </div>
+          <div class="log-duration">${e.minutes}m</div>
+          <button class="delete-btn" onclick="deleteLogEntry('${today}',${i})" style="margin-left:8px;">✕</button>
+        </div>`).join('')}
+      </div>`}
+    </div>
+
+    <!-- 历史记录 -->
+    <div class="section">
+      <div class="section-title">最近记录</div>
+      ${renderRecentLogs(data, 7)}
+    </div>
+  `;
+
+  html += `<button class="fab" onclick="openAddLog()"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></button>`;
+
+  document.getElementById('logContent').innerHTML = html;
+}
+
+function renderCalendar(data, monthStr) {
+  const [year, month] = monthStr.split('-').map(Number);
+  const firstDay = new Date(year, month - 1, 1);
+  const lastDay = new Date(year, month, 0);
+  const daysInMonth = lastDay.getDate();
+  // Monday=0, Sunday=6
+  let startWeekday = firstDay.getDay() - 1;
+  if (startWeekday < 0) startWeekday = 6;
+
+  const today = getLocalDateStr();
+  const logDates = new Set(data.dailyLogs.map(l => l.date));
+
+  const weekdays = ['一','二','三','四','五','六','日'];
+  let html = '<div class="calendar-grid">';
+  weekdays.forEach(d => html += `<div class="cal-header">${d}</div>`);
+
+  // Previous month padding
+  const prevMonth = new Date(year, month - 1, 0);
+  for (let i = startWeekday - 1; i >= 0; i--) {
+    html += `<div class="cal-day other-month">${prevMonth.getDate() - i}</div>`;
+  }
+
+  for (let d = 1; d <= daysInMonth; d++) {
+    const ds = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isToday = ds === today;
+    const hasLog = logDates.has(ds);
+    html += `<div class="cal-day${isToday?' today':''}${hasLog?' has-log':''}">${d}</div>`;
+  }
+
+  // Next month padding
+  const totalCells = startWeekday + daysInMonth;
+  const remaining = (7 - totalCells % 7) % 7;
+  for (let i = 1; i <= remaining; i++) {
+    html += `<div class="cal-day other-month">${i}</div>`;
+  }
+
+  html += '</div>';
+  return html;
+}
+
+function formatCalTitle(monthStr) {
+  const [y, m] = monthStr.split('-');
+  return `${y}年${parseInt(m)}月`;
+}
+
+function changeCalMonth(delta) {
+  const [y, m] = App.logCalendarMonth.split('-').map(Number);
+  const d = new Date(y, m - 1 + delta, 1);
+  App.logCalendarMonth = getLocalMonthStr(d);
+  renderLog();
+}
+
+function renderRecentLogs(data, days) {
+  const logs = data.dailyLogs.slice().sort((a,b) => b.date.localeCompare(a.date)).slice(0, days);
+  if (logs.length === 0) return '<div style="padding:20px 16px;text-align:center;color:var(--text-light);font-size:13px;">暂无记录</div>';
+
+  return logs.map(log => `
+    <div style="margin:0 16px 8px;border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;">
+      <div style="padding:10px 16px;font-size:13px;font-weight:600;color:var(--text-secondary);background:var(--bg-secondary);border-bottom:1px solid var(--border);">
+        ${log.date}（${getWeekdayName(log.date)}）
+      </div>
+      ${log.entries.map(e => `
+      <div class="log-entry">
+        <div class="log-type-icon">${LOG_ICONS[e.type] || '📝'}</div>
+        <div class="log-info">
+          <div class="log-type-name">${LOG_TYPES[e.type] || e.type}</div>
+          ${e.note ? `<div class="log-note">${e.note}</div>` : ''}
+        </div>
+        <div class="log-duration">${e.minutes}m</div>
+      </div>`).join('')}
+    </div>
+  `).join('');
+}
+
+function getWeekdayName(dateStr) {
+  const d = new Date(dateStr + 'T00:00:00');
+  return ['日','一','二','三','四','五','六'][d.getDay()];
+}
+
+function openAddLog() {
+  document.getElementById('logDate').value = getLocalDateStr();
+  document.getElementById('logType').value = 'read';
+  document.getElementById('logMinutes').value = '';
+  document.getElementById('logNote').value = '';
+  openModal('logModal');
+}
+
+function saveLog() {
+  const date = document.getElementById('logDate').value;
+  const type = document.getElementById('logType').value;
+  const minutes = parseInt(document.getElementById('logMinutes').value);
+  const note = document.getElementById('logNote').value.trim();
+
+  if (!date) { showToast('请选择日期', 'error'); return; }
+  if (!minutes || minutes < 1) { showToast('请输入有效时长', 'error'); return; }
+
+  const data = Storage.get();
+  let log = data.dailyLogs.find(l => l.date === date);
+  if (!log) {
+    log = { date, entries: [], createdAt: getLocalDateStr() };
+    data.dailyLogs.push(log);
+  }
+  log.entries.push({ type, minutes, note });
+  Storage.save(data);
+  closeModal('logModal');
+  showToast('记录已保存');
+  renderLog();
+}
+
+function deleteLogEntry(date, index) {
+  const data = Storage.get();
+  const log = data.dailyLogs.find(l => l.date === date);
+  if (log) {
+    log.entries.splice(index, 1);
+    if (log.entries.length === 0) {
+      data.dailyLogs = data.dailyLogs.filter(l => l.date !== date);
+    }
+    Storage.save(data);
+    renderLog();
+  }
+}
+
+// ============ 全局事件 ============
+document.addEventListener('DOMContentLoaded', () => {
+  // 底部导航
+  document.querySelectorAll('.nav-item').forEach(btn => {
+    btn.addEventListener('click', () => showPage(btn.dataset.page));
+  });
+
+  // 分段控制
+  document.querySelectorAll('.segmented').forEach(seg => {
+    seg.querySelectorAll('.seg-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        seg.querySelectorAll('.seg-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+      });
+    });
+  });
+
+  // ESC 关闭模态框
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      document.querySelectorAll('.modal-overlay.show').forEach(m => m.classList.remove('show'));
+      document.body.style.overflow = '';
+    }
+  });
+
+  // 点击背景关闭模态框
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', e => {
+      if (e.target === overlay) { overlay.classList.remove('show'); document.body.style.overflow = ''; }
+    });
+  });
+
+  // 预设体系联动
+  document.getElementById('systemPreset').addEventListener('change', function() {
+    document.getElementById('systemCustomName').disabled = !!this.value;
+  });
+
+  showPage('Dashboard');
+});
+
+// ============ Service Worker (inline) ============
+if ('serviceWorker' in navigator) {
+  const swCode = `
+    const CACHE_NAME = 'english-tracker-v1';
+    const ASSETS = ['/english.html'];
+    self.addEventListener('install', e => { self.skipWaiting(); });
+    self.addEventListener('activate', e => { e.waitUntil(clients.claim()); });
+    self.addEventListener('fetch', e => {
+      e.respondWith(fetch(e.request).catch(() => caches.match(e.request)));
+    });
+  `;
+  const blob = new Blob([swCode], { type: 'application/javascript' });
+  const swUrl = URL.createObjectURL(blob);
+  navigator.serviceWorker.register(swUrl).catch(() => {});
+}
+</script>
+
+</body>
+</html>

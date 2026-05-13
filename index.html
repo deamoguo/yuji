@@ -1205,6 +1205,43 @@ input[type="number"]::-webkit-inner-spin-button {
   display: none !important;
 }
 
+/* 分类分组标题 */
+.category-header {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  background: #f5f5f5;
+  cursor: pointer;
+  user-select: none;
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+.category-header .arrow {
+  width: 0; height: 0;
+  border-left: 5px solid transparent;
+  border-right: 5px solid transparent;
+  border-top: 6px solid #999;
+  margin-right: 8px;
+  transition: transform 0.2s;
+}
+.category-header.collapsed .arrow {
+  transform: rotate(-90deg);
+}
+.category-header .cat-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: #333;
+}
+.category-header .cat-count {
+  margin-left: auto;
+  font-size: 12px;
+  color: #999;
+}
+.category-group.collapsed .category-content {
+  display: none;
+}
+
 /* 批量操作模式 */
 .batch-mode .card {
   cursor: default;
@@ -1748,6 +1785,10 @@ input[type="number"]::-webkit-inner-spin-button {
           <label class="form-label">位置（可选）</label>
           <input type="text" class="form-input" id="newTankLocation" placeholder="例如：客厅电视柜旁">
         </div>
+        <div class="form-group">
+          <label class="form-label">缸类型（可选）</label>
+          <input type="text" class="form-input" id="newTankCategory" placeholder="例如：积木缸、罐缸">
+        </div>
       </div>
       <div class="modal-footer">
         <button class="btn btn-secondary" onclick="closeModal('addTankModal')">取消</button>
@@ -1776,6 +1817,10 @@ input[type="number"]::-webkit-inner-spin-button {
         <div class="form-group">
           <label class="form-label">位置</label>
           <input type="text" class="form-input" id="editTankLocation">
+        </div>
+        <div class="form-group">
+          <label class="form-label">缸类型</label>
+          <input type="text" class="form-input" id="editTankCategory" placeholder="例如：积木缸、罐缸">
         </div>
       </div>
       <div class="modal-footer">
@@ -2476,6 +2521,7 @@ const Storage = {
       id: Date.now().toString(),
       name: tank.name || '新鱼缸',
       location: tank.location || '',
+      category: tank.category || '未分类',
       createdAt: new Date().toISOString()
     };
     tanks.push(newTank);
@@ -3429,7 +3475,9 @@ const App = {
   speechSupported: false,
   // 批量操作相关
   batchMode: false,
-  selectedTanks: new Set()
+  selectedTanks: new Set(),
+  // 分类折叠状态
+  collapsedCategories: {}
 };
 
 // ============ 初始化 ============
@@ -3568,6 +3616,26 @@ function showPage(pageName) {
 
 // ============ 鱼缸页面 ============
 
+// 按分类分组鱼缸（兼容旧数据无 category 字段）
+function groupTanksByCategory(tanks) {
+  const groups = {};
+  tanks.forEach(tank => {
+    const cat = tank.category || '未分类';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(tank);
+  });
+  // 排序：分类名字母排序，未分类放最后
+  const sortedKeys = Object.keys(groups).filter(k => k !== '未分类').sort();
+  if (groups['未分类']) sortedKeys.push('未分类');
+  return sortedKeys.map(key => ({ name: key, tanks: groups[key] }));
+}
+
+// 切换分类折叠状态
+function toggleCategoryCollapse(category) {
+  App.collapsedCategories[category] = !App.collapsedCategories[category];
+  renderTanksPage();
+}
+
 function renderTanksPage() {
   const tanks = Storage.getTanks();
   const container = document.getElementById('tanksList');
@@ -3607,34 +3675,48 @@ function renderTanksPage() {
       </div>
     `;
     
-    tanks.forEach(tank => {
-      const isSelected = App.selectedTanks.has(tank.id);
-      const fishCount = Storage.getFishByTank(tank.id).length;
-      
+    const categories = groupTanksByCategory(tanks);
+    categories.forEach(({ name: catName, tanks: catTanks }) => {
+      const isCollapsed = App.collapsedCategories[catName];
       html += `
-        <div class="batch-card ${isSelected ? 'selected' : ''}" onclick="toggleTankSelection('${tank.id}')">
-          <div class="batch-checkbox">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
-              <path d="M20 6L9 17l-5-5"/>
-            </svg>
+        <div class="category-group ${isCollapsed ? 'collapsed' : ''}">
+          <div class="category-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleCategoryCollapse('${catName.replace(/'/g, "\\'")}')">
+            <span class="arrow"></span>
+            <span class="cat-name">${catName}</span>
+            <span class="cat-count">${catTanks.length}个</span>
           </div>
-          <div class="batch-card-content">
-            <div class="tank-icon">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M2 12h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 1 2-2h2"/>
-                <path d="M2 12c0-3 2-6 4-8"/>
-                <path d="M22 12c0-3-2-6-4-8"/>
-                <path d="M6 12v4"/>
-                <path d="M18 12v4"/>
+          <div class="category-content">
+      `;
+      catTanks.forEach(tank => {
+        const isSelected = App.selectedTanks.has(tank.id);
+        const fishCount = Storage.getFishByTank(tank.id).length;
+        
+        html += `
+          <div class="batch-card ${isSelected ? 'selected' : ''}" onclick="toggleTankSelection('${tank.id}')">
+            <div class="batch-checkbox">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3">
+                <path d="M20 6L9 17l-5-5"/>
               </svg>
             </div>
-            <div class="batch-card-info">
-              <div class="batch-card-title">${tank.name}</div>
-              <div class="batch-card-meta">${tank.location || '未设置位置'} · ${fishCount}条鱼</div>
+            <div class="batch-card-content">
+              <div class="tank-icon">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M2 12h2a2 2 0 0 1 2 2v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2a2 2 0 0 1 2-2h2"/>
+                  <path d="M2 12c0-3 2-6 4-8"/>
+                  <path d="M22 12c0-3-2-6-4-8"/>
+                  <path d="M6 12v4"/>
+                  <path d="M18 12v4"/>
+                </svg>
+              </div>
+              <div class="batch-card-info">
+                <div class="batch-card-title">${tank.name}</div>
+                <div class="batch-card-meta">${tank.location || '未设置位置'} · ${fishCount}条鱼</div>
+              </div>
             </div>
           </div>
-        </div>
-      `;
+        `;
+      });
+      html += `</div></div>`;
     });
     
     html += `
@@ -3674,49 +3756,65 @@ function renderTanksPage() {
     `;
   }
   
-  tanks.forEach(tank => {
-    const reminders = Storage.getRemindersByTank(tank.id);
-    const waterReminder = reminders.find(r => r.type === 'water_change');
-    const fishCount = Storage.getFishByTank(tank.id).length;
-    const records = Storage.getRecordsByTank(tank.id);
-    const lastWater = records.filter(r => r.type === 'water_change').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-    const lastFeeding = records.filter(r => r.type === 'feeding').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-    const lastFilter = records.filter(r => r.type === 'filter_clean').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
-    
-    let countdown = null;
-    let countdownClass = 'safe';
-    
-    if (waterReminder && waterReminder.enabled) {
-      const timeInfo = NotificationManager.getTimeUntilReminder(waterReminder);
-      countdown = NotificationManager.formatCountdown(timeInfo);
-      countdownClass = countdown.class;
-    }
-    
+  const categories = groupTanksByCategory(tanks);
+  categories.forEach(({ name: catName, tanks: catTanks }) => {
+    const isCollapsed = App.collapsedCategories[catName];
     html += `
-      <div class="card fade-in" onclick="showTankDetail('${tank.id}')">
-        <div class="card-header">
-          <div style="flex: 1;">
-            <div class="card-title">${tank.name}</div>
-            <div class="card-meta">${tank.location || ''}${tank.location ? ' · ' : ''}${fishCount}条鱼</div>
-          </div>
-          ${countdown ? `<span class="countdown-badge ${countdownClass}">${countdown.text}</span>` : ''}
+      <div class="category-group ${isCollapsed ? 'collapsed' : ''}">
+        <div class="category-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleCategoryCollapse('${catName.replace(/'/g, "\\'")}')">
+          <span class="arrow"></span>
+          <span class="cat-name">${catName}</span>
+          <span class="cat-count">${catTanks.length}个</span>
         </div>
-        <div class="card-overview">
-          <div class="overview-item">
-            <span class="overview-label">💧换水</span>
-            <span class="overview-value">${lastWater ? formatShortDate(lastWater.createdAt) : '-'}</span>
-          </div>
-          <div class="overview-item">
-            <span class="overview-label">🍚喂食</span>
-            <span class="overview-value">${lastFeeding ? formatShortDate(lastFeeding.createdAt) : '-'}</span>
-          </div>
-          <div class="overview-item">
-            <span class="overview-label">🧹滤棉</span>
-            <span class="overview-value">${lastFilter ? formatShortDate(lastFilter.createdAt) : '-'}</span>
-          </div>
-        </div>
-      </div>
+        <div class="category-content">
     `;
+    
+    catTanks.forEach(tank => {
+      const reminders = Storage.getRemindersByTank(tank.id);
+      const waterReminder = reminders.find(r => r.type === 'water_change');
+      const fishCount = Storage.getFishByTank(tank.id).length;
+      const records = Storage.getRecordsByTank(tank.id);
+      const lastWater = records.filter(r => r.type === 'water_change').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+      const lastFeeding = records.filter(r => r.type === 'feeding').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+      const lastFilter = records.filter(r => r.type === 'filter_clean').sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))[0];
+      
+      let countdown = null;
+      let countdownClass = 'safe';
+      
+      if (waterReminder && waterReminder.enabled) {
+        const timeInfo = NotificationManager.getTimeUntilReminder(waterReminder);
+        countdown = NotificationManager.formatCountdown(timeInfo);
+        countdownClass = countdown.class;
+      }
+      
+      html += `
+        <div class="card fade-in" onclick="showTankDetail('${tank.id}')">
+          <div class="card-header">
+            <div style="flex: 1;">
+              <div class="card-title">${tank.name}</div>
+              <div class="card-meta">${tank.location || ''}${tank.location ? ' · ' : ''}${fishCount}条鱼</div>
+            </div>
+            ${countdown ? `<span class="countdown-badge ${countdownClass}">${countdown.text}</span>` : ''}
+          </div>
+          <div class="card-overview">
+            <div class="overview-item">
+              <span class="overview-label">💧换水</span>
+              <span class="overview-value">${lastWater ? formatShortDate(lastWater.createdAt) : '-'}</span>
+            </div>
+            <div class="overview-item">
+              <span class="overview-label">🍚喂食</span>
+              <span class="overview-value">${lastFeeding ? formatShortDate(lastFeeding.createdAt) : '-'}</span>
+            </div>
+            <div class="overview-item">
+              <span class="overview-label">🧹滤棉</span>
+              <span class="overview-value">${lastFilter ? formatShortDate(lastFilter.createdAt) : '-'}</span>
+            </div>
+          </div>
+        </div>
+      `;
+    });
+    
+    html += `</div></div>`;
   });
   
   html += `
@@ -4212,20 +4310,38 @@ function showManageTanks() {
   if (tanks.length === 0) {
     container.innerHTML = '<div class="empty-desc" style="text-align: center; padding: 20px;">暂无鱼缸</div>';
   } else {
-    container.innerHTML = tanks.map(t => `
-      <div class="list-item">
-        <div class="list-item-content">
-          <div class="list-item-title">${t.name}</div>
-          <div class="list-item-meta">${t.location || '未设置位置'}</div>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="editTank('${t.id}')">编辑</button>
-        <button class="delete-btn" onclick="deleteTank('${t.id}')">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
-          </svg>
-        </button>
-      </div>
-    `).join('');
+    const categories = groupTanksByCategory(tanks);
+    let html = '';
+    categories.forEach(({ name: catName, tanks: catTanks }) => {
+      const isCollapsed = App.collapsedCategories[catName];
+      html += `
+        <div class="category-group ${isCollapsed ? 'collapsed' : ''}">
+          <div class="category-header ${isCollapsed ? 'collapsed' : ''}" onclick="toggleCategoryCollapse('${catName.replace(/'/g, "\\'")}')">
+            <span class="arrow"></span>
+            <span class="cat-name">${catName}</span>
+            <span class="cat-count">${catTanks.length}个</span>
+          </div>
+          <div class="category-content">
+      `;
+      catTanks.forEach(t => {
+        html += `
+          <div class="list-item">
+            <div class="list-item-content">
+              <div class="list-item-title">${t.name}</div>
+              <div class="list-item-meta">${t.location || '未设置位置'}</div>
+            </div>
+            <button class="btn btn-ghost btn-sm" onclick="editTank('${t.id}')">编辑</button>
+            <button class="delete-btn" onclick="deleteTank('${t.id}')">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 6h18M8 6V4h8v2M19 6v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6"/>
+              </svg>
+            </button>
+          </div>
+        `;
+      });
+      html += `</div></div>`;
+    });
+    container.innerHTML = html;
   }
   
   openModal('manageTanksModal');
@@ -4238,6 +4354,7 @@ function editTank(id) {
   document.getElementById('editTankId').value = id;
   document.getElementById('editTankName').value = tank.name;
   document.getElementById('editTankLocation').value = tank.location || '';
+  document.getElementById('editTankCategory').value = tank.category || '';
   closeModal('manageTanksModal');
   openModal('editTankModal');
 }
@@ -4246,6 +4363,7 @@ function saveTank() {
   const id = document.getElementById('editTankId').value;
   const name = document.getElementById('editTankName').value.trim();
   const location = document.getElementById('editTankLocation').value.trim();
+  const category = document.getElementById('editTankCategory').value.trim() || '未分类';
   
   if (!name) {
     showToast('请输入鱼缸名称', 'error');
@@ -4253,7 +4371,7 @@ function saveTank() {
   }
   
   if (id) {
-    Storage.updateTank(id, { name, location });
+    Storage.updateTank(id, { name, location, category });
     showToast('鱼缸已更新');
   }
   
@@ -4408,19 +4526,21 @@ function closeModal(modalId) {
 function showAddTankModal() {
   document.getElementById('newTankName').value = '';
   document.getElementById('newTankLocation').value = '';
+  document.getElementById('newTankCategory').value = '';
   openModal('addTankModal');
 }
 
 function addTank() {
   const name = document.getElementById('newTankName').value.trim();
   const location = document.getElementById('newTankLocation').value.trim();
+  const category = document.getElementById('newTankCategory').value.trim() || '未分类';
   
   if (!name) {
     showToast('请输入鱼缸名称', 'error');
     return;
   }
   
-  Storage.addTank({ name, location });
+  Storage.addTank({ name, location, category });
   closeModal('addTankModal');
   renderTanksPage();
   showToast('鱼缸已添加');
@@ -4430,9 +4550,16 @@ function showAddFishModal(tankId) {
   const tanks = Storage.getTanks();
   const select = document.getElementById('newFishTank');
   
-  select.innerHTML = tanks.map(t => 
-    `<option value="${t.id}" ${t.id === (tankId || App.currentTank?.id) ? 'selected' : ''}>${t.name}</option>`
-  ).join('');
+  const categories = groupTanksByCategory(tanks);
+  let html = '';
+  categories.forEach(({ name: catName, tanks: catTanks }) => {
+    html += `<optgroup label="${catName}">`;
+    catTanks.forEach(t => {
+      html += `<option value="${t.id}" ${t.id === (tankId || App.currentTank?.id) ? 'selected' : ''}>${t.name}</option>`;
+    });
+    html += `</optgroup>`;
+  });
+  select.innerHTML = html;
   
   document.getElementById('newFishName').value = '';
   document.getElementById('newFishSpecies').value = '';
@@ -4495,9 +4622,16 @@ function populateTankSelect(selectId) {
   const select = document.getElementById(selectId);
   if (!select) return;
   const tanks = Storage.getTanks();
-  select.innerHTML = tanks.map(t => 
-    `<option value="${t.id}">${t.name}</option>`
-  ).join('');
+  const categories = groupTanksByCategory(tanks);
+  let html = '';
+  categories.forEach(({ name: catName, tanks: catTanks }) => {
+    html += `<optgroup label="${catName}">`;
+    catTanks.forEach(t => {
+      html += `<option value="${t.id}">${t.name}</option>`;
+    });
+    html += `</optgroup>`;
+  });
+  select.innerHTML = html;
 }
 
 function showWaterChangeModal() {
